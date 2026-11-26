@@ -8,3 +8,9 @@ node_modules/
 *.bin
 *.bin.1
 *.bin.2
+
+# Local AI models (downloaded with: python -m filecabinet.fetch) and their per-machine calibration
+models/
+*.gguf
+*.gguf.calibration.json
+*.part

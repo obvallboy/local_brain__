@@ -385,3 +385,96 @@ window.addEventListener("beforeunload", () => {
   if (consoleSession) navigator.sendBeacon?.(`/api/serial/${consoleSession.id}/close`);
 });
 loadDevices();
+
+// ---- Brain (File Cabinet AI) -------------------------------------------------
+const LABEL_CLASS = {
+  "I know": "lb-know", "Filed": "lb-filed", "I think": "lb-think", "I checked": "lb-checked",
+  "I remember": "lb-remember", "From my core": "lb-core",
+  "I don't remember": "lb-unsure", "I'm not sure": "lb-unsure", "Command": "lb-cmd",
+};
+let brainStatusTimer = null;
+
+function brainOpen(open) {
+  $("#brain").classList.toggle("hidden", !open);
+  if (open) { refreshBrainStatus(); $("#brain-input").focus(); }
+}
+$("#brain-toggle").addEventListener("click", () => brainOpen($("#brain").classList.contains("hidden")));
+$("#brain-close").addEventListener("click", () => brainOpen(false));
+
+async function refreshBrainStatus() {
+  clearTimeout(brainStatusTimer);
+  try {
+    const s = await api("/api/brain/status");
+    const parts = !s.ready
+      ? [s.loading ? "loading models…" : "starting…"]
+      : [s.model ? `model: ${s.model}` : "drawers and rules only (no model)",
+         s.embed ? "meaning-matching on" : null, s.gpu_layers ? "GPU" : null];
+    $("#brain-status").textContent = parts.filter(Boolean).join(" · ");
+    $("#brain-status").title = [...(s.notes || []), `memory: ${s.memory_file}`].join("\n");
+    if (!s.ready) brainStatusTimer = setTimeout(refreshBrainStatus, 1500);
+  } catch (e) {
+    $("#brain-status").textContent = e.message;
+  }
+}
+
+function brainMessage(who, ...kids) {
+  const node = el("div", { class: "msg " + who }, ...kids);
+  $("#brain-log").append(node);
+  node.scrollIntoView({ block: "end" });
+  return node;
+}
+
+function brainReply(r) {
+  const parts = [
+    el("span", { class: "lb " + (LABEL_CLASS[r.label] || "lb-cmd") }, r.label),
+    el("div", { class: "msg-text" }, r.text),
+  ];
+  if (r.route) {
+    parts.push(el("details", { class: "why" },
+      el("summary", {}, "why?"),
+      el("div", {}, `Route: ${r.route.kind} (${r.route.depth}), because ${r.route.reason}`),
+      el("div", {}, `Drawers opened: ${r.drawers.join(", ") || "none"}`),
+      ...r.evidence.map((e) => el("div", { class: "ev" }, "• " + e))));
+  }
+  return brainMessage("bot", ...parts);
+}
+
+$("#brain-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const input = $("#brain-input");
+  const message = input.value.trim();
+  if (!message) return;
+  input.value = "";
+  brainMessage("me", el("div", { class: "msg-text" }, message));
+  const pending = brainMessage("bot", el("span", { class: "muted" }, "thinking…"));
+  input.disabled = true;
+  try {
+    const r = await api("/api/brain/ask", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message }),
+    });
+    pending.remove();
+    brainReply(r);
+    refreshBrainStatus();
+  } catch (e) {
+    pending.remove();
+    brainMessage("bot", el("span", { class: "err" }, e.message));
+  } finally {
+    input.disabled = false;
+    input.focus();
+  }
+});
+
+$("#brain-import").addEventListener("change", async (ev) => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  try {
+    const r = await api("/api/brain/import", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: await file.text(),
+    });
+    $("#brain-foot-status").textContent = "Imported: " +
+      Object.entries(r.added).map(([k, n]) => `${n} ${k.replace("_", " ")}`).join(", ");
+  } catch (e) {
+    $("#brain-foot-status").textContent = e.message;
+  }
+  ev.target.value = "";
+});

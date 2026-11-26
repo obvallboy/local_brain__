@@ -1,0 +1,35 @@
+{
+  "scores": {
+    "routing": [
+      22,
+      24
+    ],
+    "learn facts from conversation": [
+      4,
+      4
+    ],
+    "recall (reworded)": [
+      4,
+      4
+    ],
+    "remember events told in chat": [
+      2,
+      2
+    ],
+    "crisis support line": [
+      4,
+      4
+    ]
+  },
+  "harms": {
+    "hallucinated memories": 0,
+    "wrong answers given": 0
+  },
+  "fails": {
+    "routing": [
+      "'that car at the park, what color was it again': expected recall, got chat",
+      "'lol nice': expected chat, got opinion"
+    ]
+  },
+  "seconds": 0
+}

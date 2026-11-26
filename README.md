@@ -12,7 +12,10 @@ Pi) to do it for real. Own-hardware scope throughout — repair, reuse, learning
 
 | Path | What it is |
 | --- | --- |
-| **`device-integrator/`** | The real, runnable code. Flask hardware inspector + serial console, plus the Python (`integration/`) and Node (`integration-js/`) integration stacks. |
+| **`device-integrator/`** | The real, runnable code. Flask hardware inspector + serial console + the **Brain** panel, plus the Python (`integration/`) and Node (`integration-js/`) integration stacks. |
+| **`file-cabinet/`** | The local AI behind the Brain panel: a memory organized like a file cabinet, a small local model, honesty labels on every answer. Also runs on its own in a terminal. |
+| **`models/`** | Not committed. The Brain's model files, downloaded with `python brain_setup.py`. |
+| **`brain_setup.py`** | One-time setup per computer: downloads the Brain's models and calibrates them. |
 | **`device-bench/`** | The browser **simulator** (snapshot of the live artifact) + runnable engine test suites (`net.js`, `sb8.js`, `cell.js`, `spiflash.js`). Live: <https://claude.ai/artifact/44dTeFdXpHKR7K7jsRbPg7> |
 | **`pibench/`** | Turns a **Raspberry Pi** into a reconfigurable hardware tool via *profiles* (`spi-bios`, `i2c-eeprom`, `uart-console`, `aw15r2`) + the Alienware BIOS-unlock runbook. |
 | **`.github/workflows/`** | CI for all of the above. |
@@ -39,11 +42,29 @@ top side, left of the PCH — clip-reachable, no board removal). Plan: Pi + SOIC
 reassemble. Full steps: [`pibench/runbooks/aw15r2-bios-unlock.md`](pibench/runbooks/aw15r2-bios-unlock.md).
 **Status:** torn down, chip confirmed, tooling ready — blocked only on a SOIC-8 clip.
 
-## Wiring it into a local agent
-The seam for a local model is the **transport-neutral brain** (`device-integrator/integration/brain.py`
-and `integration-js/brain.js`) — dependency-free and testable. Feed it device telemetry plus the
-guards' verdicts and let the model drive the decisions/commands, swapping the fixed thermostat/anomaly
-rules for a learned policy. The Device Bench's "Ask Claude" box is the same idea in the simulator.
+## The local AI: the Brain panel
+The Device Integrator now has a **🧠 Brain** panel powered by the [File Cabinet](file-cabinet/README.md):
+a local assistant whose memory is split into drawers (facts you teach it, patterns, protected core values,
+and a temp drawer that checks real things). Ask "what's plugged in?" and it reads the live device list and
+your device labels; every answer says where it came from. It runs fully on your machine.
+
+Set up a computer (laptop or desktop), from the repo root:
+
+```bash
+python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r device-integrator/requirements.txt -r file-cabinet/requirements.txt
+python brain_setup.py --gpu-layers -1                     # models + calibration, once per computer
+cd device-integrator && python app.py --gpu-layers -1     # http://127.0.0.1:5000 → 🧠 Brain
+```
+
+Each computer keeps its own memory; **Export memory** / **Import memory** in the panel copies it across.
+Leave out `--gpu-layers -1` on a machine without an NVIDIA GPU. Without any model, the Brain still runs on
+its drawers and rules.
+
+The thermostat **integration brain** (`device-integrator/integration/brain.py`, `integration-js/brain.js`)
+is separate: it controls devices with fixed, tested rules and guards. A natural next step is logging its
+alerts (integrity, security, anomaly) into the File Cabinet's episode log, so you can ask "what went wrong
+with the sensor yesterday?"
 
 ## Sources
 Consolidated from `obvallboy/personal-windows-ai-agent` (device-integrator, device-bench) and

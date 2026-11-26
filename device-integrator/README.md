@@ -37,6 +37,11 @@ transmission, no input injection, and no remote control.
   reverse-engineering notes (pinouts, baud rates, decoded bytes). Stored in a
   local JSON file.
 - **Export** a JSON snapshot of everything discovered plus your notes.
+- **Brain** — a local AI panel (the [File Cabinet](../file-cabinet)). Ask "what's plugged in?" or "is my
+  arduino connected?" and it checks the real device list, including the labels you gave devices in Notes.
+  Tell it things ("my brother's name is leo") and it remembers them. Every answer is labelled with where it
+  came from (*I know*, *I checked*, *I think*, *I remember*, *I'm not sure*), with a "why?" to expand.
+  The model runs on your machine; nothing is sent anywhere.
 
 ## Install & run
 
@@ -49,12 +54,34 @@ python app.py
 
 Open <http://127.0.0.1:5000>.
 
+### Turning on the Brain's model (optional)
+
+Without a model the Brain still works on its drawers and rules (facts you teach it, memories, device checks).
+For general questions and better understanding, add a local model:
+
+```bash
+pip install -r ../file-cabinet/requirements.txt   # llama-cpp-python
+python ../brain_setup.py --gpu-layers -1          # download + calibrate the models, once per computer
+python app.py --gpu-layers -1
+```
+
+`brain_setup.py` puts the models in the repo's `models/` folder, which the app checks automatically, and
+calibrates the chat model. `--gpu-layers -1` runs the model on an NVIDIA GPU (needs a CUDA build of llama-cpp-python; see the
+File Cabinet README). The models load in the background, so the page opens right away; the Brain panel shows
+when they're ready. Its memory is `~/.device-integrator/cabinet.db` on each computer; use **Export memory** /
+**Import memory** in the panel to copy it between your laptop and desktop.
+
 Options:
 
 ```bash
 python app.py --port 8080          # choose a port
 python app.py --host 0.0.0.0       # expose on your LAN (opt-in; you'll be warned)
+python app.py --gpu-layers -1      # Brain model on the GPU
+python app.py --models D:/models   # Brain models from another folder (or --model / --embed for exact files)
 ```
+
+The same settings can come from the environment: `FILE_CABINET_MODELS`, `FILE_CABINET_MODEL`,
+`FILE_CABINET_EMBED`, `FILE_CABINET_GPU_LAYERS`.
 
 ### Dependencies
 
@@ -197,7 +224,8 @@ device-integrator/
 │   ├── discovery.py           enumerate serial / USB / storage / network (read-only)
 │   ├── details.py             sysfs attribute trees + dmesg filtering
 │   ├── serialconsole.py       serial session manager (injectable transport)
-│   └── notes.py               per-device notes/labels (JSON persistence)
+│   ├── notes.py               per-device notes/labels (JSON persistence)
+│   └── assistant.py           hosts the File Cabinet AI (the Brain panel)
 ├── templates/index.html       dashboard shell
 ├── static/                    styles.css, app.js
 └── tests/                     pytest suite (serial console exercised over a PTY)
@@ -217,6 +245,10 @@ device-integrator/
 | `POST`   | `/api/serial/<id>/write`   | Send text or hex `{data, hex, line_ending}`|
 | `POST`   | `/api/serial/<id>/close`   | Close a session                            |
 | `GET`    | `/api/export`              | Download a JSON snapshot + notes           |
+| `GET`    | `/api/brain/status`        | Brain model, meaning-matching, memory file |
+| `POST`   | `/api/brain/ask`           | Ask or tell the Brain `{message}`; slash commands work too |
+| `GET`    | `/api/brain/export`        | Download what the Brain has learned        |
+| `POST`   | `/api/brain/import`        | Merge in an export (core memories wait for approval) |
 
 ## Tests
 

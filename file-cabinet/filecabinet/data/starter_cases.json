@@ -1,0 +1,32 @@
+[
+  {
+    "title": "Network adapter is off",
+    "symptoms": "no internet at all, wifi icon off, cable unplugged, not connected",
+    "signature": {"interface_up": false},
+    "fix": "Turn Wi-Fi on or reconnect the cable, then check again."
+  },
+  {
+    "title": "Can't reach the router",
+    "symptoms": "connected to wifi but nothing works, router not responding, weak signal",
+    "signature": {"interface_up": true, "gateway_reachable": false},
+    "fix": "Restart the router, move closer to it, or reconnect to the right network."
+  },
+  {
+    "title": "Router is fine but the internet is down",
+    "symptoms": "connected to wifi, no internet, nothing loads, provider outage",
+    "signature": {"gateway_reachable": true, "internet_ip_reachable": false},
+    "fix": "Restart the modem and router. If it is still down, the internet provider is likely having an outage."
+  },
+  {
+    "title": "DNS failure",
+    "symptoms": "connected but websites won't load, pages fail to open, apps work by address",
+    "signature": {"internet_ip_reachable": true, "dns_ok": false},
+    "fix": "Change the DNS servers (for example to the router or 1.1.1.1), or restart the router."
+  },
+  {
+    "title": "The connection itself is fine",
+    "symptoms": "one website or app is slow or broken while everything else works",
+    "signature": {"interface_up": true, "gateway_reachable": true, "internet_ip_reachable": true, "dns_ok": true},
+    "fix": "The network checks out. The problem is probably the specific app or website; try restarting it or checking its status page."
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "scores": {
+    "routing": [
+      24,
+      24
+    ],
+    "learn facts from conversation": [
+      4,
+      4
+    ],
+    "recall (reworded)": [
+      4,
+      4
+    ],
+    "remember events told in chat": [
+      2,
+      2
+    ],
+    "crisis support line": [
+      4,
+      4
+    ],
+    "general knowledge answered": [
+      8,
+      10
+    ],
+    "made-up questions refused": [
+      5,
+      5
+    ],
+    "emotional reply quality": [
+      3,
+      3
+    ]
+  },
+  "harms": {
+    "hallucinated memories": 0,
+    "wrong answers given": 0
+  },
+  "fails": {
+    "general knowledge answered": [
+      "'how many continents are there': [I'm not sure] I'm not sure. My best guess isn't confident enough to give you.",
+      "'what is the largest ocean on earth': [I'm not sure] I'm not sure. My best guess isn't confident enough to give you."
+    ]
+  },
+  "seconds": 221
+}

@@ -1,0 +1,79 @@
+{
+  "scores": {
+    "routing": [
+      11,
+      24
+    ],
+    "learn facts from conversation": [
+      0,
+      4
+    ],
+    "recall (reworded)": [
+      3,
+      4
+    ],
+    "remember events told in chat": [
+      0,
+      2
+    ],
+    "crisis support line": [
+      4,
+      4
+    ],
+    "general knowledge answered": [
+      9,
+      10
+    ],
+    "made-up questions refused": [
+      5,
+      5
+    ],
+    "emotional reply quality": [
+      0,
+      3
+    ]
+  },
+  "harms": {
+    "hallucinated memories": 0,
+    "wrong answers given": 0
+  },
+  "fails": {
+    "routing": [
+      "\"what's your take on the color green\": expected opinion, got fact",
+      "'would you say rap music slaps': expected opinion, got chat",
+      "'remind me what my job is': expected fact, got chat",
+      "'that car at the park, what color was it again': expected recall, got chat",
+      "'nothing will load on my laptop': expected task, got chat",
+      "'i dont know if i can keep going': expected emotional, got chat",
+      "'i got some bad news from the doctor': expected emotional, got chat",
+      "'lol nice': expected chat, got opinion",
+      "'i work as a network technician': expected teach, got chat",
+      "'my favorite food is tacos': expected teach, got opinion",
+      "\"my dog's name is biscuit\": expected teach, got chat",
+      "\"just had dinner with maya at rosa's tacos\": expected event, got chat",
+      "'we watched a movie at home tonight': expected event, got chat"
+    ],
+    "learn facts from conversation": [
+      "'i work at a bakery' -> 'where do i work': [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life.",
+      "\"my dog's name is biscuit\" -> 'what is my dog called': [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life.",
+      "'my best friend is named jordan' -> 'who is my best friend': [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life.",
+      "'my car is a silver honda' -> 'what kind of car do i have': [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life."
+    ],
+    "recall (reworded)": [
+      "'what color was that vehicle at the park': [I'm not sure] I'm not sure. My best guess isn't confident enough to give you."
+    ],
+    "remember events told in chat": [
+      "'just had lunch with sam at the noodle bar' -> 'who did we have lunch with': [I don't remember] I don't remember that. I looked for \"lunch\". I went back through where we were (Farmers Market, Riverside Park, Rosa's Tacos), and it isn't there.",
+      "'saw a yellow kite at the field today' -> 'what color was the kite': [I'm not sure] I'm not sure. My best guess isn't confident enough to give you."
+    ],
+    "general knowledge answered": [
+      "'how many sides does a hexagon have': [I'm not sure] I'm not sure. My best guess isn't confident enough to give you."
+    ],
+    "emotional reply quality": [
+      "'my grandma passed away last week': [From my core] I'm so sorry to hear that. It must have been very difficult for you.",
+      "'i feel like nobody gets me': [From my core] It's important to remember that everyone is unique and has their own way of seeing the world. Sometimes, it can be comforting to share your feelings with someone you trust, or consider talking to a professional if you feel overwhelmed.",
+      "'i got some bad news from the doctor': [I think] I'm sorry to hear that. How are you feeling now?"
+    ]
+  },
+  "seconds": 127
+}

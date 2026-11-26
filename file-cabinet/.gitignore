@@ -1,0 +1,5 @@
+.venv/
+models/
+__pycache__/
+*.db
+llama_install.log

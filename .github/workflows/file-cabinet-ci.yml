@@ -1,0 +1,42 @@
+name: File Cabinet CI
+
+# The File Cabinet AI's tests: routing, drawers, recall, filing, safety, devices,
+# export/import. They need no model, so they run anywhere in a few seconds.
+on:
+  push:
+    paths:
+      - "file-cabinet/**"
+      - ".github/workflows/file-cabinet-ci.yml"
+  pull_request:
+    paths:
+      - "file-cabinet/**"
+      - ".github/workflows/file-cabinet-ci.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: file-cabinet
+
+jobs:
+  test:
+    name: pytest (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install test runner
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run tests (no model needed)
+        run: pytest -q

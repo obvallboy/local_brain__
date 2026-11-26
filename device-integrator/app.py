@@ -9,6 +9,10 @@ Run:
     python app.py                 # http://127.0.0.1:5000
     python app.py --port 8080
     python app.py --host 0.0.0.0  # expose on your LAN (opt-in)
+    python app.py --gpu-layers -1 # run the Brain's model on the GPU
+
+The Brain panel is the File Cabinet AI (../file-cabinet). It finds its models in
+../models (download them with: python -m filecabinet.fetch) and runs locally.
 """
 
 from __future__ import annotations
@@ -20,6 +24,7 @@ from typing import Any, Dict
 from flask import Flask, jsonify, request, send_from_directory
 
 from integrator import discovery, details
+from integrator.assistant import Assistant, AssistantConfig
 from integrator.notes import NotesStore
 from integrator.serialconsole import SessionManager
 
@@ -31,11 +36,18 @@ DEFAULT_DATA_DIR = os.environ.get(
 
 
 def create_app(data_dir: str = DEFAULT_DATA_DIR,
-               session_manager: SessionManager | None = None) -> Flask:
+               session_manager: SessionManager | None = None,
+               assistant: Assistant | None = None,
+               notes: NotesStore | None = None) -> Flask:
     app = Flask(__name__, static_folder=None)
     os.makedirs(data_dir, exist_ok=True)
-    app.config["NOTES"] = NotesStore(os.path.join(data_dir, "notes.json"))
+    app.config["NOTES"] = notes or NotesStore(os.path.join(data_dir, "notes.json"))
     app.config["SERIAL"] = session_manager or SessionManager()
+    app.config["ASSISTANT"] = assistant or Assistant(
+        AssistantConfig.from_env(data_dir),
+        devices=discovery.snapshot,
+        labels=app.config["NOTES"].all,
+    )
 
     # -- static UI --------------------------------------------------------
     @app.get("/")
@@ -155,6 +167,40 @@ def create_app(data_dir: str = DEFAULT_DATA_DIR,
         closed = app.config["SERIAL"].close(sid)
         return jsonify({"closed": closed})
 
+    # -- brain (File Cabinet AI) ------------------------------------------
+    @app.get("/api/brain/status")
+    def api_brain_status():
+        return jsonify(app.config["ASSISTANT"].status())
+
+    @app.post("/api/brain/ask")
+    def api_brain_ask():
+        body = request.get_json(silent=True) or {}
+        message = (body.get("message") or "").strip()
+        if not message:
+            return jsonify({"error": "message is required"}), 400
+        if len(message) > 2000:
+            return jsonify({"error": "message is too long (2000 characters max)"}), 400
+        try:
+            return jsonify(app.config["ASSISTANT"].ask(message))
+        except RuntimeError as exc:  # e.g. the core values file was changed on disk
+            return jsonify({"error": str(exc)}), 409
+
+    @app.get("/api/brain/export")
+    def api_brain_export():
+        resp = jsonify(app.config["ASSISTANT"].export())
+        resp.headers["Content-Disposition"] = "attachment; filename=brain-memory.json"
+        return resp
+
+    @app.post("/api/brain/import")
+    def api_brain_import():
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            return jsonify({"error": "send the exported JSON as the request body"}), 400
+        try:
+            return jsonify({"added": app.config["ASSISTANT"].import_(body)})
+        except (ValueError, KeyError, TypeError) as exc:
+            return jsonify({"error": f"not a File Cabinet export: {exc}"}), 400
+
     # -- export -----------------------------------------------------------
     @app.get("/api/export")
     def api_export():
@@ -180,9 +226,24 @@ def main() -> None:
                         help="bind address (default localhost; use 0.0.0.0 to expose on LAN)")
     parser.add_argument("--port", type=int, default=5000)
     parser.add_argument("--debug", action="store_true")
+    parser.add_argument("--models", help="folder of .gguf files for the Brain (default: ../models)")
+    parser.add_argument("--model", help="the Brain's chat model file (overrides --models)")
+    parser.add_argument("--embed", help="the Brain's embedding model file (overrides --models)")
+    parser.add_argument("--gpu-layers", type=int, default=None,
+                        help="Brain model layers on the GPU; -1 for all (needs a CUDA build of llama-cpp-python)")
     args = parser.parse_args()
 
-    app = create_app()
+    data_dir = DEFAULT_DATA_DIR
+    os.makedirs(data_dir, exist_ok=True)
+    notes = NotesStore(os.path.join(data_dir, "notes.json"))
+    assistant = Assistant(
+        AssistantConfig.from_env(data_dir, models_dir=args.models, model=args.model,
+                                 embed=args.embed, gpu_layers=args.gpu_layers),
+        devices=discovery.snapshot,
+        labels=notes.all,
+    )
+    assistant.warm_up_async()  # load the models in the background; the page opens right away
+    app = create_app(data_dir, assistant=assistant, notes=notes)  # one notes store for the page and the Brain
     if args.host not in ("127.0.0.1", "localhost"):
         print(f"⚠️  Binding to {args.host} — the console will be reachable by other "
               "machines on your network. Only do this on a network you trust.")

@@ -6,10 +6,12 @@ on:
   push:
     paths:
       - "device-integrator/**"
+      - "file-cabinet/**"
       - ".github/workflows/device-integrator-ci.yml"
   pull_request:
     paths:
       - "device-integrator/**"
+      - "file-cabinet/**"
       - ".github/workflows/device-integrator-ci.yml"
   workflow_dispatch:
 
