@@ -1,0 +1,50 @@
+title = "UART serial console (probe an unknown board's TX/RX)"
+summary = "Open a serial console to a dev board / router / embedded target — the real counterpart to the device-integrator serial console."
+device = "3.3 V UART (board TX/RX header, or a USB-UART adapter)"
+interface = "Pi GPIO UART (GPIO14 TXD / GPIO15 RXD) or a USB-serial /dev/ttyUSB0"
+
+[setup]
+packages = ["tio", "picocom"]
+enable = [
+  "Pi UART: sudo raspi-config → Interface Options → Serial Port → login shell NO, hardware serial YES; then use /dev/serial0",
+  "Or just plug in a USB-UART adapter and use /dev/ttyUSB0 (simplest, isolates voltages).",
+]
+notes = [
+  "3.3 V LEVELS ONLY. Never wire a 5 V or RS-232 (±12 V) line straight to the Pi — it will damage it. Use a level shifter or a 3.3 V USB-UART.",
+  "TX↔RX cross over: board TX → Pi RX, board RX → Pi TX. Share GND. Do NOT connect the board's Vcc.",
+  "Unknown baud? Start at 115200, then try the scan action.",
+]
+
+[[wiring]]
+chip = "GND"
+signal = "GND (common ground)"
+pi = "6"
+pi_label = "GND"
+[[wiring]]
+chip = "TX"
+signal = "board TX → Pi RX"
+pi = "10"
+pi_label = "UART RXD (GPIO15)"
+[[wiring]]
+chip = "RX"
+signal = "board RX → Pi TX"
+pi = "8"
+pi_label = "UART TXD (GPIO14)"
+
+[vars]
+port = "/dev/serial0"
+baud = "115200"
+
+[actions.console]
+desc = "Open an interactive serial console at {baud} (Ctrl-] or Ctrl-A Ctrl-X to quit)."
+commands = ["tio -b {baud} {port} || picocom -b {baud} {port}"]
+
+[actions.listen]
+desc = "Passively print whatever the board emits at {baud} (good right after power-on)."
+commands = ["stty -F {port} {baud} raw -echo && timeout 20 cat {port} | strings"]
+
+[actions.scan-baud]
+desc = "Try the common baud rates and show which one yields readable text."
+commands = [
+  "for b in 9600 19200 38400 57600 115200 1500000; do echo \"== $b ==\"; stty -F {port} $b raw -echo; timeout 3 cat {port} | strings | head -3; done",
+]

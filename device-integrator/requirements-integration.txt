@@ -1,0 +1,13 @@
+# Real integration stack (the production counterpart to the Device Bench sim).
+# Install with:  pip install -r requirements-integration.txt
+paho-mqtt>=2.0        # MQTT telemetry
+pymodbus>=3.6         # Modbus/TCP PLC registers
+requests>=2.31        # HTTP / REST devices (cameras, APIs)
+pydantic>=2.6         # data-integrity validation
+cryptography>=42.0    # signed telemetry (HMAC)
+
+# Physical GPIO — only installs/works on a Raspberry Pi:
+RPi.GPIO>=0.7 ; platform_machine == "aarch64" or platform_machine == "armv7l"
+
+# Dev/test:
+pytest>=8.0

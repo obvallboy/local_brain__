@@ -1,0 +1,12 @@
+# Device Integrator dependencies.
+# Flask is required; the rest are optional and the app degrades gracefully
+# without them (it falls back to sysfs / lsusb / device-node globbing).
+Flask>=3.0,<4.0
+
+# Optional — richer device discovery and the serial console:
+pyserial>=3.5     # serial port enumeration + serial console
+psutil>=5.9       # storage + network interface details
+pyusb>=1.2        # USB enumeration where sysfs/lsusb aren't available (needs libusb)
+
+# Dev/test only:
+pytest>=8.0

@@ -1,0 +1,44 @@
+name: pibench
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths:
+      - "pibench/**"
+      - ".github/workflows/pibench.yml"
+  pull_request:
+    paths:
+      - "pibench/**"
+      - ".github/workflows/pibench.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Run pibench tests
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+          python -m pytest -q pibench/tests
+      - name: Lint every profile (load + full render, no leftover tokens)
+        run: |
+          python - <<'PY'
+          import pathlib, sys
+          sys.path.insert(0, "pibench")
+          import pibench
+          names = pibench.list_profiles()
+          assert names, "no profiles found"
+          for n in names:
+              prof = pibench.load_profile(n)
+              v = pibench.resolve_vars(prof, [])
+              for a in prof["actions"]:
+                  for c in pibench.action_commands(prof, a):
+                      r = pibench.render(c, v)
+                      assert "{" not in r and "}" not in r, f"{n}:{a} -> {r}"
+          print("OK:", ", ".join(names))
+          PY

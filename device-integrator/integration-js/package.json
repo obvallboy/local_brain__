@@ -1,0 +1,20 @@
+{
+  "name": "device-integration-js",
+  "version": "0.1.0",
+  "description": "Node integration stack (mqtt, axios, johnny-five, crypto-js) — the production twin of the Device Bench simulator.",
+  "type": "commonjs",
+  "main": "engine.js",
+  "scripts": {
+    "sim": "node engine.js --sim --ticks 24 --fuzz-after 8",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "crypto-js": "^4.2.0",
+    "mqtt": "^5.5.0"
+  },
+  "optionalDependencies": {
+    "johnny-five": "^2.1.0"
+  },
+  "license": "MIT"
+}

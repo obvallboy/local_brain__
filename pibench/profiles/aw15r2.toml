@@ -1,0 +1,85 @@
+title = "Alienware 15 R2 BIOS (Winbond W25Q128FVSQ @ silk UH4)"
+summary = "Model-matched profile for THIS laptop — a $12 garage-sale Alienware 15 R2 (board LA-C912P) with a forgotten system password. Own hardware."
+device = "Winbond W25Q128FVSQ, 16 MB, SOIC-8, 3.3 V — board silk label UH4 (NOT the smaller UT2/UT5 = 25Q80)"
+interface = "spi0 (/dev/spidev0.0)"
+
+[setup]
+packages = ["flashrom"]
+enable = ["SPI: sudo raspi-config → Interface Options → SPI → Enable, then reboot"]
+notes = [
+  "Target is the chip at silk UH4 (W25Q128FVSQ, 16 MB). The smaller chip at UT2/UT5 (25Q80) is the EC — leave it.",
+  "CONFIRMED location on this board: UH4 = 'winbond 25Q128FVSQ' 8-pin SOIC on the TOP side, immediately LEFT of the Intel PCH (the big teal chip), beside silk ON6/QN6 and the JSSD1 M.2 slot. Reachable with a clip — no need to remove/flip the board.",
+  "3.3 V part → the Pi's SPI drives it directly. No CH341A, no level shifter, no 1.8 V adapter.",
+  "Battery connector UNPLUGGED and laptop fully de-powered before clipping on.",
+  "Golden rule: keep the first verified dump untouched. The dump contains the Intel ME region + data tied to THIS machine — never flash a generic image, only your own edited copy.",
+  "Honest heads-up: getting the dump is the easy half. CLEARING the password inside the dump is model-specific research (community tools / a .bin-cleaning service) — we do that step with the dump in hand, not before.",
+  "flashrom auto-detects this chip. If it ever reports multiple matches, add:  -c W25Q128.V",
+]
+
+# SOIC-8 clip on UH4 -> Pi 40-pin header. Match pin 1 on both (chip pin 1 = the dot).
+[[wiring]]
+chip = "1"
+signal = "CS#"
+pi = "24"
+pi_label = "SPI0 CE0 (GPIO8)"
+[[wiring]]
+chip = "2"
+signal = "DO / MISO"
+pi = "21"
+pi_label = "SPI0 MISO (GPIO9)"
+[[wiring]]
+chip = "3"
+signal = "WP#"
+pi = "1 or 17"
+pi_label = "3V3 (tie high = not write-protected)"
+[[wiring]]
+chip = "4"
+signal = "GND"
+pi = "6"
+pi_label = "GND"
+[[wiring]]
+chip = "5"
+signal = "DI / MOSI"
+pi = "19"
+pi_label = "SPI0 MOSI (GPIO10)"
+[[wiring]]
+chip = "6"
+signal = "CLK"
+pi = "23"
+pi_label = "SPI0 SCLK (GPIO11)"
+[[wiring]]
+chip = "7"
+signal = "HOLD# / RESET#"
+pi = "1 or 17"
+pi_label = "3V3 (tie high)"
+[[wiring]]
+chip = "8"
+signal = "VCC"
+pi = "1 or 17"
+pi_label = "3V3"
+
+[vars]
+dev = "/dev/spidev0.0"
+spispeed = "256"
+image = "aw15r2.bin"
+
+[actions.probe]
+desc = "Detect UH4 — confirms the clip + wiring before any read. Expect 'Winbond W25Q128.V'."
+commands = ["sudo flashrom -p linux_spi:dev={dev},spispeed={spispeed}"]
+
+[actions.read]
+desc = "Dump UH4 TWICE and confirm the two reads match — your trustworthy backup."
+commands = [
+  "sudo flashrom -p linux_spi:dev={dev},spispeed={spispeed} -r {image}.1",
+  "sudo flashrom -p linux_spi:dev={dev},spispeed={spispeed} -r {image}.2",
+  "cmp {image}.1 {image}.2 && cp {image}.1 {image} && sha256sum {image} && echo 'VERIFIED backup -> {image} (COPY it somewhere safe and never edit this one)' || echo 'READS DIFFER — reseat the clip, lower spispeed (--set spispeed=128), retry'",
+]
+
+[actions.verify]
+desc = "Re-read UH4 and compare against {image} (use after writing the cleared copy back)."
+commands = ["sudo flashrom -p linux_spi:dev={dev},spispeed={spispeed} -v {image}"]
+
+[actions.write]
+desc = "Write {image} back to UH4. Point it at your CLEARED copy, e.g. --set image=aw15r2.clean.bin."
+destructive = true
+commands = ["sudo flashrom -p linux_spi:dev={dev},spispeed={spispeed} -w {image}"]

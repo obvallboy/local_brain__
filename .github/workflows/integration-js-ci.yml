@@ -1,0 +1,44 @@
+name: Integration stack CI (Node)
+
+# Installs the REAL Node integration libraries (axios, crypto-js, mqtt; johnny-five
+# optional) and runs the Node integration tests — proving the library-backed code works.
+on:
+  push:
+    paths:
+      - "device-integrator/integration-js/**"
+      - ".github/workflows/integration-js-ci.yml"
+  pull_request:
+    paths:
+      - "device-integrator/integration-js/**"
+      - ".github/workflows/integration-js-ci.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: device-integrator/integration-js
+
+jobs:
+  test:
+    name: node ${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ["20", "22"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install the real Node integration libraries
+        run: npm install
+
+      - name: Confirm the real libraries import
+        run: node -e "require('crypto-js'); require('axios'); require('mqtt'); console.log('node integration stack OK')"
+
+      - name: Run the simulator end-to-end
+        run: node engine.js --sim --ticks 20 --fuzz-after 6
+
+      - name: Run tests
+        run: node --test

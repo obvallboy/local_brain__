@@ -1,0 +1,56 @@
+name: Integration stack CI
+
+# Installs the REAL integration libraries (paho-mqtt, pymodbus, requests,
+# pydantic, cryptography) and runs the integration test suite — so the code
+# that uses them is proven to work, even though the simulator needs none of them.
+on:
+  push:
+    paths:
+      - "device-integrator/integration/**"
+      - "device-integrator/tests/test_integration_*.py"
+      - "device-integrator/requirements-integration.txt"
+      - ".github/workflows/integration-ci.yml"
+  pull_request:
+    paths:
+      - "device-integrator/integration/**"
+      - "device-integrator/tests/test_integration_*.py"
+      - "device-integrator/requirements-integration.txt"
+      - ".github/workflows/integration-ci.yml"
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: device-integrator
+
+jobs:
+  test:
+    name: integration (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: device-integrator/requirements-integration.txt
+
+      - name: Install the real integration libraries
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-integration.txt
+
+      - name: Confirm the real libraries import
+        run: python -c "import paho.mqtt.client, pymodbus, requests, pydantic, cryptography; print('integration stack OK')"
+
+      - name: Run the simulator end-to-end (fuzz → integrity guard)
+        run: python -m integration.engine --sim --ticks 20 --fuzz-after 6
+
+      - name: Run the simulator end-to-end (in-range glitch → anomaly guard)
+        run: python -m integration.engine --sim --ticks 30 --anomaly-at 20
+
+      - name: Run integration tests
+        run: pytest -q tests/test_integration_brain.py tests/test_integration_engine.py tests/test_integration_models.py tests/test_integration_security.py tests/test_integration_anomaly.py

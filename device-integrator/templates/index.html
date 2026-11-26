@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Device Integrator</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">⚙️</span>
+      <div>
+        <h1>Device Integrator</h1>
+        <p class="tagline">Local workbench for inspecting &amp; tinkering with your own hardware</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="caps" class="caps" title="Available back-ends"></span>
+      <button id="refresh" class="btn">↻ Refresh</button>
+      <a id="export" class="btn" href="/api/export">⇩ Export JSON</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Left: device inventory -->
+    <aside class="panel inventory">
+      <div class="panel-head">
+        <h2>Devices</h2>
+        <input id="filter" type="search" placeholder="filter…" />
+      </div>
+      <div id="device-list" class="device-list">
+        <p class="muted">Loading…</p>
+      </div>
+    </aside>
+
+    <!-- Right: detail / console -->
+    <section class="panel detail">
+      <div id="detail-empty" class="empty">
+        <p>Select a device on the left to inspect it.</p>
+        <p class="muted">Serial ports can be opened as a live console.</p>
+      </div>
+
+      <div id="detail-view" class="hidden">
+        <div class="detail-head">
+          <div>
+            <h2 id="detail-title">Device</h2>
+            <p id="detail-sub" class="muted"></p>
+          </div>
+          <div id="detail-actions"></div>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="info">Info</button>
+          <button class="tab" data-tab="notes">Notes</button>
+          <button class="tab hidden" data-tab="console" id="tab-console">Console</button>
+        </div>
+
+        <div class="tab-body" id="tab-info">
+          <table id="info-table" class="kv"></table>
+          <div id="info-extra"></div>
+        </div>
+
+        <div class="tab-body hidden" id="tab-notes-body">
+          <label class="field">
+            <span>Label</span>
+            <input id="note-label" type="text" placeholder="e.g. ESP32 dev board" />
+          </label>
+          <label class="field">
+            <span>Notes</span>
+            <textarea id="note-text" rows="12" placeholder="Pinout, baud rate, protocol notes, findings…"></textarea>
+          </label>
+          <div class="row">
+            <button id="note-save" class="btn primary">Save</button>
+            <span id="note-status" class="muted"></span>
+          </div>
+        </div>
+
+        <div class="tab-body hidden" id="tab-console-body">
+          <div class="console-bar">
+            <label>Baud
+              <select id="baud">
+                <option>9600</option><option>19200</option><option>38400</option>
+                <option>57600</option><option selected>115200</option>
+                <option>230400</option><option>460800</option><option>921600</option>
+              </select>
+            </label>
+            <button id="console-open" class="btn primary">Open</button>
+            <button id="console-close" class="btn" disabled>Close</button>
+            <span id="console-status" class="muted">closed</span>
+            <span class="spacer"></span>
+            <label class="chk"><input type="checkbox" id="autoscroll" checked /> autoscroll</label>
+            <button id="console-clear" class="btn small">clear</button>
+          </div>
+          <pre id="console-out" class="console-out"></pre>
+          <form id="console-form" class="console-send">
+            <input id="console-input" type="text" placeholder="type to send…" autocomplete="off" disabled />
+            <label class="chk"><input type="checkbox" id="send-hex" /> hex</label>
+            <select id="line-ending" title="line ending">
+              <option value="none">no newline</option>
+              <option value="lf" selected>\n (LF)</option>
+              <option value="cr">\r (CR)</option>
+              <option value="crlf">\r\n (CRLF)</option>
+            </select>
+            <button class="btn primary" id="console-send-btn" disabled>Send</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span class="muted">Runs locally · read-only inspection · serial I/O only on ports you open ·
+    no transmit, no input injection, no network.</span>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
