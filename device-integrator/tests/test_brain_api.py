@@ -108,3 +108,22 @@ def test_lazy_load_without_models(tmp_path):
     status = client.get("/api/brain/status").get_json()
     assert status["ready"] is True and status["model"] is None
     assert any("no model found" in n for n in status["notes"])
+
+
+def test_list_and_forget_facts(client):
+    ask(client, "my locker code is 4312")
+    facts = client.get("/api/brain/facts").get_json()
+    locker = next(f for f in facts if "4312" in f["fact"])
+    assert client.delete(f"/api/brain/facts/{locker['id']}").get_json() == {"deleted": locker["id"]}
+    assert client.delete(f"/api/brain/facts/{locker['id']}").status_code == 404
+    assert ask(client, "what's my locker code")["label"] == "I'm not sure"
+
+
+def test_forget_by_asking(client):
+    ask(client, "remember that my gym is planet fitness")
+    assert ask(client, "forget my gym")["label"] == "Removed"
+    assert ask(client, "what's my gym")["label"] == "I'm not sure"
+
+
+def test_page_has_the_drawer1_view(client):
+    assert b"brain-facts-toggle" in client.get("/").data

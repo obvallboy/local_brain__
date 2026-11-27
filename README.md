@@ -53,6 +53,7 @@ Set up a computer (laptop or desktop), from the repo root:
 ```bash
 python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r device-integrator/requirements.txt -r file-cabinet/requirements.txt
+python brain_setup.py --check                             # what's installed / missing, and how to fix it
 python brain_setup.py --gpu-layers -1                     # models + calibration, once per computer
 cd device-integrator && python app.py --gpu-layers -1     # http://127.0.0.1:5000 → 🧠 Brain
 ```
@@ -61,10 +62,13 @@ Each computer keeps its own memory; **Export memory** / **Import memory** in the
 Leave out `--gpu-layers -1` on a machine without an NVIDIA GPU. Without any model, the Brain still runs on
 its drawers and rules.
 
+On Windows, `pip install llama-cpp-python` compiles it, which needs Microsoft's "Build Tools for Visual
+Studio" (C++ workload); `brain_setup.py --check` explains what's missing.
+
 The thermostat **integration brain** (`device-integrator/integration/brain.py`, `integration-js/brain.js`)
-is separate: it controls devices with fixed, tested rules and guards. A natural next step is logging its
-alerts (integrity, security, anomaly) into the File Cabinet's episode log, so you can ask "what went wrong
-with the sensor yesterday?"
+is separate: it controls devices with fixed, tested rules and guards. Run its engine with `--log-to-brain`
+and its alerts (corrupt data, forged messages, abnormal readings) go into the Brain's memory, so you can
+ask the Brain panel "what went wrong with the sensor today?"
 
 ## Sources
 Consolidated from `obvallboy/personal-windows-ai-agent` (device-integrator, device-bench) and

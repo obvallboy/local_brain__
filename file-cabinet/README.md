@@ -21,7 +21,13 @@ drawer can also see the hardware plugged into your computer. It also runs on its
   come next. Everything else is classified by the local model into a fixed set of kinds, and its choice must
   pass sanity checks (for example, "recall" needs a sign of a shared past such as "we" or "that").
 - You can just talk. "my brother's name is leo" is filed in drawer 1; "we just saw a red car at the park" is
-  logged as a memory. A newer fact replaces an older one about the same thing.
+  logged as a memory. A newer fact replaces an older one about the same thing. Natural lead-ins work too:
+  "remember that my locker code is 4312", "fyi my dentist is dr patel", "leo is my brother",
+  "i'm allergic to peanuts". If the rules don't recognize how a fact was said, the model may rewrite it, but
+  only with your words: its subject must come from your sentence and so must most of the fact, or nothing is filed.
+- You can make it forget: "forget my locker code" takes that fact (and any older versions of it) out of
+  drawer 1. `/facts` lists drawer 1 and `/forget <id>` removes by number. Core memories can't be removed this
+  way; drawer 3 is append-only.
 - With the optional embedding model, words match by meaning: "automobile" finds "car", "sibling" finds "sister".
   Related but different words ("car" and "truck") do not match.
 - Drawer 1 comes first: a question it can already answer never reaches the model (0.1 s instead of about 5 s on a CPU).
@@ -36,6 +42,9 @@ drawer can also see the hardware plugged into your computer. It also runs on its
   repeats the question is rejected, and so is one whose own words fall below the model's confidence cutoff.
   The cutoff is measured per model with `python -m filecabinet.calibrate` (see below), because each model is
   confident in a different way.
+- Time phrases narrow the search: "this morning", "three days ago", "on monday", "last weekend", "this week".
+  "What did we do on monday?" lists what was logged that day; "did we go hiking on monday?" won't match a
+  Saturday hike.
 - A memory only counts if it is found in the episode log. If a first look fails, it asks itself
   "Where were we?", rebuilds that scene, and looks again. Only a strong match can start that search;
   one shared word ("red") is not a memory.
@@ -68,7 +77,15 @@ python -m filecabinet.fetch --size 1.5b   # smaller chat model (1.1 GB, Apache 2
 python -m filecabinet.fetch --gpu-layers -1   # calibrate on the GPU (faster)
 ```
 
-Files already there are skipped. To get them by hand instead:
+Files already there are skipped. `python -m filecabinet.fetch --check` (or `python brain_setup.py --check`
+from the repo root) downloads nothing and reports what's installed, whether llama-cpp-python can use your
+GPU, and exactly what to do about anything missing.
+
+On Windows: PyPI only has llama-cpp-python's source code, so `pip install` builds it on your computer. That
+needs Microsoft's "Build Tools for Visual Studio" with the "Desktop development with C++" workload. The
+llama-cpp-python project also publishes ready-built packages on its own site (see its README).
+
+To get the models by hand instead:
 
 The embedding model for matching by meaning: `https://huggingface.co/CompendiumLabs/bge-small-en-v1.5-gguf`,
 file `bge-small-en-v1.5-f16.gguf` (MIT license, 67 MB). Pass it with `--embed`.
@@ -112,7 +129,7 @@ python -m filecabinet --network dns        # practise with a simulated broken ne
 ```
 
 Type `/help` for commands: `/fact`, `/like`, `/dislike`, `/log`, `/done`, `/core`, `/approve`,
-`/pending`, `/why`, `/wrong`, `/export`, `/import`. Data is saved in `~/.file_cabinet/cabinet.db`.
+`/pending`, `/why`, `/wrong`, `/facts`, `/forget`, `/export`, `/import`. Data is saved in `~/.file_cabinet/cabinet.db`.
 
 ### Two computers
 

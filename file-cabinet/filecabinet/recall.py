@@ -24,7 +24,8 @@ COLORS = {
 META = set(tokens(
     "remember recall forgot earlier yesterday today morning tonight night last time week ago before "
     "other day that saw see seen spotted noticed went go did do thing stuff something anything again "
-    "remind tell kind"
+    "remind tell kind weekend afternoon evening days ago monday tuesday wednesday thursday friday saturday sunday "
+    "one two three four five six seven couple"
 ))
 
 ATTRIBUTES = {
@@ -44,9 +45,32 @@ class RecallResult:
     cues: list[str] = field(default_factory=list)
 
 
+WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+NUMBERS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "a couple of": 2}
+
+
 def time_window(question: str, now: datetime) -> tuple[datetime, datetime] | None:
     q = question.lower()
     day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if "this morning" in q:
+        return day, day + timedelta(hours=12)
+    if "this afternoon" in q:
+        return day + timedelta(hours=12), day + timedelta(hours=18)
+    if "this evening" in q:
+        return day + timedelta(hours=17), day + timedelta(days=1)
+    if m := re.search(r"\b(\d+|one|two|three|four|five|six|seven|a couple of) days? ago\b", q):
+        n = int(m.group(1)) if m.group(1).isdigit() else NUMBERS[m.group(1)]
+        return day - timedelta(days=n), day - timedelta(days=n - 1)
+    if "last weekend" in q:
+        back = (now.weekday() - 5) % 7 or 7  # the most recent Saturday before today
+        return day - timedelta(days=back), day - timedelta(days=back - 2)
+    if m := re.search(r"\b(last |on )?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b", q):
+        back = (now.weekday() - WEEKDAYS.index(m.group(2))) % 7
+        if back == 0 and (m.group(1) or "").strip() == "last":
+            back = 7
+        return day - timedelta(days=back), day - timedelta(days=back - 1)
+    if "this week" in q:
+        return day - timedelta(days=now.weekday()), day + timedelta(days=1)
     if "last night" in q:
         return day - timedelta(hours=7), day + timedelta(hours=6)
     if "yesterday" in q:
@@ -102,6 +126,13 @@ def recall(question: str, store: Store, now: datetime, matcher: Matcher | None =
     episodes = store.episodes(*window) if window else store.episodes()
     attribute = detect_attribute(question)
     terms = set(tokens(question)) - META - ATTRIBUTE_WORDS
+
+    # "What did we do on monday?" names only a time: tell what was logged then.
+    if window and not terms and episodes:
+        listed = episodes[:3]
+        text = " ".join(f"{e.details.rstrip('.')}. ({_context(e)})" for e in listed)
+        more = f" And {len(episodes) - 3} more." if len(episodes) > 3 else ""
+        return RecallResult(True, text + more, [f"episode #{e.id}: {e.details} ({_context(e)})" for e in listed])
 
     # Step 1: look directly.
     ranked = sorted(

@@ -126,6 +126,12 @@ class Store:
         rows = self.db.execute("SELECT id, subject, fact, source FROM facts ORDER BY id").fetchall()
         return [Fact(**dict(r)) for r in rows]
 
+    def delete_fact(self, fact_id: int) -> bool:
+        """Remove one drawer-1 fact. (Core memories cannot be removed this way: drawer 3 is append-only.)"""
+        cur = self.db.execute("DELETE FROM facts WHERE id = ?", (fact_id,))
+        self.db.commit()
+        return cur.rowcount > 0
+
     def has_fact(self, subject: str) -> bool:
         row = self.db.execute("SELECT 1 FROM facts WHERE subject = ?", (subject.strip().lower(),)).fetchone()
         return row is not None

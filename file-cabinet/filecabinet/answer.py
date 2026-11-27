@@ -18,6 +18,7 @@ class Label(str, Enum):
     DONT_REMEMBER = "I don't remember"  # recall searched and found nothing
     CORE = "From my core"              # deep emotional answer, guided by drawer 3
     FILED = "Filed"                    # something you told me was filed in a drawer or the log
+    REMOVED = "Removed"                # something you asked me to forget was taken out of drawer 1
     NOT_SURE = "I'm not sure"          # nothing reliable to answer from
 
 
@@ -25,7 +26,7 @@ class Label(str, Enum):
 class Route:
     """What the front desk decided about a question."""
 
-    kind: str                  # opinion | fact | recall | task | emotional | chat | teach | event | devices
+    kind: str                  # opinion | fact | recall | task | emotional | chat | teach | event | devices | forget
     depth: str                 # surface | deep
     drawers: tuple[str, ...]   # drawers to open, in order
     reason: str                # which rule fired

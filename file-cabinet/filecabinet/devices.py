@@ -12,12 +12,29 @@ from dataclasses import dataclass
 
 from .similarity import Matcher, tokens
 
-DEVICE_QUESTION = re.compile(
-    r"\b(plugged in|plugged into|attached|usb|serial ports?|com ?ports?|com\d+|tty\w*|devices?|"
-    r"dev ?board|arduino|esp32|esp8266|raspberry pi|pi pico|microcontroller|showing up|detected|"
-    r"recogni[sz]ed|connected to (this|the|my) (computer|laptop|pc|desktop|machine))\b",
+_EXPLICIT = re.compile(
+    r"\b(plugged in|plugged into|what('s| is) (connected|attached)|"
+    r"(attached|connected) to (this|my|the) (computer|laptop|pc|desktop|machine))\b",
     re.I,
 )
+_HARDWARE = re.compile(
+    r"\b(usb|serial|com ?\d+|com ports?|ports?|tty\w*|devices?|dev ?boards?|arduino|esp32|esp8266|"
+    r"raspberry pi|pico|microcontroller|boards?|adapters?|dongles?|webcam|camera|mouse|keyboard|"
+    r"receiver|controller|drives?)\b",
+    re.I,
+)
+_PRESENCE = re.compile(
+    r"\b(connected|attached|plugged|showing up|show up|shows up|detected|recogni[sz]ed|see|seeing|"
+    r"do i have|have i got|is there|are there|which (com )?port|what (com )?port|listed|found)\b",
+    re.I,
+)
+
+
+def is_device_question(text: str) -> bool:
+    """About what is attached right now: "what's plugged in?", "is my arduino connected?".
+    A hardware word alone ("how do usb drives work?") is a general question, not a check."""
+    return bool(_EXPLICIT.search(text) or (_HARDWARE.search(text) and _PRESENCE.search(text)))
+
 
 # Words about the act of checking, not about which device.
 META = set(tokens(

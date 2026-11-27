@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 
 from .answer import Route
-from .devices import DEVICE_QUESTION
+from .devices import is_device_question
 
 # ---- normalization -------------------------------------------------------
 _SLANG = [
@@ -24,6 +24,19 @@ _SLANG = [
     (r"\bdidnt\b", "didn't"), (r"\bdoesnt\b", "doesn't"), (r"\bwasnt\b", "wasn't"), (r"\bthats\b", "that's"),
     (r"\bsisters\b(?= name)", "sister's"), (r"\bbrothers\b(?= name)", "brother's"),
 ]
+
+
+# Lead-ins before a fact: "remember that my locker code is 4312", "fyi my dentist is dr patel".
+FILLER = re.compile(
+    r"^(fyi|btw|by the way|just so you know|for the record|note that|remember that|remember:|"
+    r"keep in mind( that)?|don't forget( that)?|heads up)[,:]?\s+",
+    re.I,
+)
+FORGET = re.compile(r"^(please |can you |could you )?(forget|delete|remove|erase|unlearn)\b", re.I)
+
+
+def strip_filler(text: str) -> str:
+    return FILLER.sub("", text.strip())
 
 
 def normalize(text: str) -> str:
@@ -63,14 +76,18 @@ QUESTION = re.compile(
 EXPLICIT_RECALL = re.compile(r"\b(remember|recall|forgot|forget)\b", re.I)
 PAST_SHARED = re.compile(
     r"\b(earlier|yesterday|last night|last time|the other day|that time|did we|were we|we saw|we went|we ate|"
-    r"we did|we had|we found|we talked|we watched|with us)\b",
+    r"we did|we had|we found|we talked|we watched|with us|this morning|this afternoon|this week|last weekend|"
+    r"days? ago|on (monday|tuesday|wednesday|thursday|friday|saturday|sunday)|went wrong|go wrong|"
+    r"any (problems|issues|alerts|trouble))\b",
     re.I,
 )
 TEACH = re.compile(
     r"^(my (?:[\w']+ ){0,2}[\w']+ (is|are|was|were|lives|works|has|likes|loves|hates|plays|drives|goes|studies)\b|"
     r"my (?:[\w']+ ){0,2}[\w']+'s name is\b|"
     r"i (really )?(like|love|hate|dislike|enjoy|prefer)\b|"
-    r"i (work|live|was born|grew up|study|go to|am from|'m from)\b|i'm (a|an) |i am (a|an) )",
+    r"i (work|live|was born|grew up|study|go to|am from|'m from)\b|i'm (a|an) |i am (a|an) |"
+    r"(?!(this|that|it|he|she|they|there|here|what|who)\b)[\w']+ is my [\w' ]+$|"
+    r"i (drive|own|play|speak|ride)\b|(i'm|i am) (allergic to|from|\d+)\b)",
     re.I,
 )
 EVENT = re.compile(
@@ -127,6 +144,7 @@ DRAWERS = {
     "event": ("episode log:file",),
     "emotional": ("drawer3",),
     "devices": ("temp:devices",),
+    "forget": ("drawer1:remove",),
 }
 
 
@@ -140,7 +158,10 @@ class FrontDesk:
         answers skips the model entirely (drawer 1 first, instantly)."""
         t = normalize(text)
         is_question = bool(QUESTION.search(t))
-        recall = bool(EXPLICIT_RECALL.search(t) or (is_question and PAST_SHARED.search(t)))
+        if not is_question:
+            t = strip_filler(t)  # "remember that my locker code is 4312" is telling, not asking
+        forget = not is_question and bool(FORGET.match(t))
+        recall = not forget and bool(EXPLICIT_RECALL.search(t) or (is_question and PAST_SHARED.search(t)))
 
         # Tier 1: safety. Never overruled.
         if CRISIS.search(t):
@@ -149,13 +170,15 @@ class FrontDesk:
             return Route("emotional", "deep", DRAWERS["emotional"], "it touches something heavy", recall=recall)
 
         # Tier 2: clear patterns.
+        if forget:
+            return Route("forget", "surface", DRAWERS["forget"], "it asks me to forget something")
         if recall:
             return Route("recall", "surface", DRAWERS["recall"], "it asks about something we shared", recall=True)
         if not is_question and TEACH.search(t):
             return Route("teach", "surface", DRAWERS["teach"], "it tells me a lasting fact")
         if not is_question and EVENT.search(t):
             return Route("event", "surface", DRAWERS["event"], "it tells me something that happened")
-        if self.devices and DEVICE_QUESTION.search(t):
+        if self.devices and is_device_question(t):
             return Route("devices", "surface", DRAWERS["devices"], "it asks about the hardware attached right now")
 
         # Drawer 1 first: if a question's answer is already filed, no model call is needed.

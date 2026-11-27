@@ -1,0 +1,69 @@
+{
+  "scores": {
+    "routing": [
+      24,
+      24
+    ],
+    "learn facts from conversation": [
+      4,
+      4
+    ],
+    "recall (reworded)": [
+      3,
+      4
+    ],
+    "remember events told in chat": [
+      2,
+      2
+    ],
+    "learn from natural wording": [
+      0,
+      4
+    ],
+    "device questions": [
+      1,
+      4
+    ],
+    "recall with time phrases": [
+      1,
+      3
+    ],
+    "forgetting on request": [
+      0,
+      2
+    ],
+    "crisis support line": [
+      4,
+      4
+    ]
+  },
+  "harms": {
+    "hallucinated memories": 1,
+    "wrong answers given": 0
+  },
+  "fails": {
+    "recall (reworded)": [
+      "'do you remember the automobile we spotted earlier': [I don't remember] I don't remember that. I looked for \"automobile\". I went back through where we were (Farmers Market, Riverside Park), and it isn't there."
+    ],
+    "learn from natural wording": [
+      "'remember that my locker code is 4312' -> \"what's my locker code\": [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life.",
+      "'fyi my dentist is dr patel' -> 'who is my dentist': [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life.",
+      "\"just so you know i'm allergic to peanuts\" -> 'what am i allergic to': [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life.",
+      "'for the record my favorite band is radiohead' -> \"what's my favorite band\": [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life."
+    ],
+    "device questions": [
+      "'what devices do you recommend for a smart home': expected fact, got devices",
+      "'how do usb drives work': expected fact, got devices",
+      "'what is a dev board': expected fact, got devices"
+    ],
+    "recall with time phrases": [
+      "'what did we do last weekend': [I remember] Talked about weekend plans. (Riverside Park, walking, Wed 1:10 PM)",
+      "'did we go hiking on monday': [I remember] Hiked the ridge trail. (Ridge Trail, hiking, Sat 10:00 AM)"
+    ],
+    "forgetting on request": [
+      "'my locker code is 4312' / 'forget my locker code' -> \"what's my locker code\": [I know] Your locker code is 4312.",
+      "'my gym is planet fitness' / 'please delete my gym' -> \"what's my gym\": [I know] Your gym is planet fitness."
+    ]
+  },
+  "seconds": 0
+}

@@ -140,6 +140,16 @@ class Assistant:
             "evidence": list(a.evidence),
         }
 
+    def facts(self) -> list:
+        cab = self.cabinet()
+        with cab.lock:
+            return [{"id": f.id, "subject": f.subject, "fact": f.fact, "source": f.source} for f in cab.store.facts()]
+
+    def forget(self, fact_id: int) -> bool:
+        cab = self.cabinet()
+        with cab.lock:
+            return cab.store.delete_fact(fact_id)
+
     def export(self) -> Dict[str, Any]:
         cab = self.cabinet()
         with cab.lock:

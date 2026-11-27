@@ -156,3 +156,48 @@ def split(items, which):
         return list(items)
     start = 0 if which == "dev" else 1
     return list(items)[start::2]
+
+
+# ---- Round 2 (written before the round-2 improvements) -------------------------
+
+# (statement in natural wording, later question, word the answer must contain)
+TEACH_NATURAL = [
+    ("remember that my locker code is 4312", "what's my locker code", "4312"),
+    ("leo is my brother", "who is leo", "brother"),
+    ("fyi my dentist is dr patel", "who is my dentist", "patel"),
+    ("btw my birthday is march 3rd", "when is my birthday", "march"),
+    ("just so you know i'm allergic to peanuts", "what am i allergic to", "peanuts"),
+    ("maya is my sister", "who is maya", "sister"),
+    ("for the record my favorite band is radiohead", "what's my favorite band", "radiohead"),
+    ("i drive a red truck", "what do i drive", "truck"),
+]
+
+# (question, expected route kind) with this machine's devices available
+DEVICES = [
+    ("what's plugged in", "devices"),
+    ("is my arduino connected", "devices"),
+    ("what devices do you recommend for a smart home", "fact"),
+    ("which com port is my arduino on", "devices"),
+    ("how do usb drives work", "fact"),
+    ("do i have any serial ports", "devices"),
+    ("what is a dev board", "fact"),
+    ("is anything new showing up on usb", "devices"),
+]
+
+# (question, "remember" or "dont", accepted words separated by |). Uses the dated episodes in run_evals.py.
+RECALL_TIME = [
+    ("what did we fix three days ago", "remember", "bike"),
+    ("what did we watch on monday", "remember", "robotics"),
+    ("what did we do last weekend", "remember", "hike|bike"),
+    ("what was the truck selling this morning", "remember", "peach"),
+    ("did we go hiking on monday", "dont", ""),
+    ("what did we watch three days ago", "dont", ""),
+]
+
+# (fact to teach, how it's forgotten, question afterwards). After forgetting, it must not answer "I know".
+FORGET = [
+    ("my locker code is 4312", "forget my locker code", "what's my locker code"),
+    ("my brother's name is leo", "forget that my brother's name is leo", "what's my brother's name"),
+    ("my gym is planet fitness", "please delete my gym", "what's my gym"),
+    ("my dog's name is biscuit", "forget about my dog's name", "what is my dog's name"),
+]

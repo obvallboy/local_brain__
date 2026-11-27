@@ -16,6 +16,8 @@ HELP = """Commands:
   /pending                        list core proposals waiting for approval
   /why                            show how the last answer was produced
   /wrong <what was wrong>         save a correction for later learning
+  /facts [word]                   list what's in drawer 1 (optionally only facts with a word)
+  /forget <id>                    remove a drawer-1 fact by its number (or just say "forget my locker code")
   /export <file.json>             save everything learned (to copy to your other computer)
   /import <file.json>             merge in an export (core memories wait for /approve)
   /help, /quit
@@ -60,6 +62,12 @@ def run_command(cab, line: str, owner: str = "owner") -> str:
             return cab.last.why() if cab.last else "Nothing asked yet."
         if cmd == "/wrong" and rest:
             return f"Saved correction #{cab.correct(rest)}."
+        if cmd == "/facts":
+            facts = [f for f in cab.store.facts() if not rest or rest.lower() in f"{f.subject} {f.fact}".lower()]
+            return "\n".join(f"#{f.id} {f.subject}: {f.fact}" for f in facts) or "Drawer 1 has nothing matching that."
+        if cmd == "/forget" and rest.lstrip("#").isdigit():
+            fid = int(rest.lstrip("#"))
+            return f"Removed fact #{fid} from drawer 1." if cab.store.delete_fact(fid) else f"There's no fact #{fid}."
         if cmd == "/export" and rest:
             Path(rest).write_text(json.dumps(cab.store.export_data(), indent=2))
             return f"Saved everything learned to {rest}."

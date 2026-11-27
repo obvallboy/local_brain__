@@ -3,6 +3,7 @@
 Run it against the in-memory simulator (no hardware, no broker):
 
     python -m integration.engine --sim --ticks 24 --fuzz-after 8
+    python -m integration.engine --sim --fuzz-after 8 --log-to-brain   # then ask the Brain about it
 
 To drive real devices, construct the real transports from
 :mod:`integration.transports` and feed their readings to the same
@@ -70,6 +71,8 @@ def main(argv: Optional[List[str]] = None) -> None:
                    help="inject one in-range (45°C) glitch at tick N — only the anomaly guard catches it")
     p.add_argument("--no-integrity", action="store_true", help="disable the data-integrity (range) guard")
     p.add_argument("--no-anomaly", action="store_true", help="disable the learned anomaly guard")
+    p.add_argument("--log-to-brain", nargs="?", const="default", default=None, metavar="DB",
+                   help="also write the alerts into the Brain's memory (default: the Device Integrator's)")
     args = p.parse_args(argv)
 
     if not args.sim:
@@ -89,6 +92,11 @@ def main(argv: Optional[List[str]] = None) -> None:
           f"final_vent={'OPEN' if brain.vent_open else 'closed'}")
     for a in brain.alerts:
         print(f"  ! {a['kind']}: {a['msg']}")
+    if args.log_to_brain:
+        from .brain_log import DEFAULT_DB, log_alerts_to_brain
+        db = DEFAULT_DB if args.log_to_brain == "default" else args.log_to_brain
+        n = log_alerts_to_brain(brain.alerts, db)
+        print(f"\nLogged {n} alert(s) to the Brain's memory ({db}). Ask it: what went wrong with the sensor today?")
 
 
 if __name__ == "__main__":

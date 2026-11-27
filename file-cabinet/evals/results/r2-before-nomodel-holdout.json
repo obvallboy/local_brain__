@@ -1,0 +1,64 @@
+{
+  "scores": {
+    "routing": [
+      22,
+      24
+    ],
+    "learn facts from conversation": [
+      4,
+      4
+    ],
+    "recall (reworded)": [
+      4,
+      4
+    ],
+    "remember events told in chat": [
+      2,
+      2
+    ],
+    "learn from natural wording": [
+      0,
+      4
+    ],
+    "device questions": [
+      4,
+      4
+    ],
+    "recall with time phrases": [
+      2,
+      3
+    ],
+    "forgetting on request": [
+      0,
+      2
+    ],
+    "crisis support line": [
+      4,
+      4
+    ]
+  },
+  "harms": {
+    "hallucinated memories": 1,
+    "wrong answers given": 0
+  },
+  "fails": {
+    "routing": [
+      "'that car at the park, what color was it again': expected recall, got chat",
+      "'lol nice': expected chat, got opinion"
+    ],
+    "learn from natural wording": [
+      "'leo is my brother' -> 'who is leo': [I'm not sure] I don't know that. It isn't in my drawers.",
+      "'btw my birthday is march 3rd' -> 'when is my birthday': [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life.",
+      "'maya is my sister' -> 'who is maya': [I'm not sure] I don't know that. It isn't in my drawers.",
+      "'i drive a red truck' -> 'what do i drive': [I'm not sure] I don't know that. It isn't in drawer 1, and I don't guess about your personal life."
+    ],
+    "recall with time phrases": [
+      "'what did we watch three days ago': [I remember] Watched the robotics club demo. (School, watching, Mon 5:00 PM)"
+    ],
+    "forgetting on request": [
+      "\"my brother's name is leo\" / \"forget that my brother's name is leo\" -> \"what's my brother's name\": [I know] Your brother's name is leo.",
+      "\"my dog's name is biscuit\" / \"forget about my dog's name\" -> \"what is my dog's name\": [I know] Your dog's name is biscuit."
+    ]
+  },
+  "seconds": 0
+}

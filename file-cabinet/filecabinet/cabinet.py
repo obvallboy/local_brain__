@@ -12,7 +12,7 @@ from .answer import Answer, Label, Route
 from .core import DEFAULT_VALUES, Core
 from .devices import build as build_devices, find as find_devices, query_terms, summarize
 from .filing import FileItem, file_items, match_cases
-from .frontdesk import CRISIS, DEEP, FrontDesk, normalize
+from .frontdesk import CRISIS, DEEP, FORGET, FrontDesk, normalize, strip_filler
 from .model import Model, NoModel
 from .recall import recall
 from .similarity import Matcher, tokens
@@ -46,6 +46,17 @@ DEEP_INSTRUCTIONS = (
     "first say back what they shared in your own words, then offer quiet support, then ask one gentle open "
     "question. No advice lists, no clichés, no jokes. You are not a therapist."
 )
+EXTRACT_SYSTEM = (
+    "The user is telling a personal assistant a lasting fact about themselves or their life. "
+    "subject: one to three words from the user's sentence naming what the fact is about (for example "
+    "'locker code' or 'brother'). fact: the fact as one short sentence spoken to the user, using their words "
+    "('Your locker code is 4312.'). If there is no lasting fact, answer with empty strings."
+)
+EXTRACT_SCHEMA = {
+    "type": "object",
+    "properties": {"subject": {"type": "string"}, "fact": {"type": "string"}},
+    "required": ["subject", "fact"],
+}
 CRISIS_LINE = (
     " If you might hurt yourself, please reach out right now to someone you trust or a crisis line. "
     "In the US you can call or text 988."
@@ -124,6 +135,7 @@ class FileCabinet:
             "teach": self._teach,
             "event": self._event,
             "devices": self._devices,
+            "forget": self._forget,
             "chat": self._chat,
         }[route.kind]
         answer = handler(text, route)
@@ -181,7 +193,9 @@ class FileCabinet:
 
     # ---- learning from conversation -----------------------------------
     def _teach(self, text: str, route: Route) -> Answer:
-        taught = extract_fact(text)
+        taught, how = extract_fact(text), "rules"
+        if taught is None:
+            taught, how = self._extract_with_model(text), "the model"
         if taught is None:
             return Answer(Label.NOT_SURE, "I couldn't tell what to file. You can use /fact subject = fact.", route, ("drawer1",))
         replaced = [f for f in self.store.facts() if f.subject == taught.subject and f.fact != taught.fact
@@ -189,7 +203,40 @@ class FileCabinet:
         fid = self.store.add_fact(taught.subject, taught.fact, source="told in conversation")
         note = f" It replaces: \"{replaced[-1].fact}\"" if replaced else ""
         return Answer(Label.FILED, f"Got it. Filed in drawer 1: {taught.fact}{note}", route, ("drawer1",),
-                      (f"drawer 1 fact #{fid} (subject: {taught.subject})",))
+                      (f"drawer 1 fact #{fid} (subject: {taught.subject}; understood by {how})",))
+
+    def _extract_with_model(self, text: str):
+        """When the rules don't recognize how a fact was said, the model may rewrite it, but only
+        with words you used: its subject must come from your sentence, and so must most of the fact."""
+        if not hasattr(self.model, "ask_json"):
+            return None
+        from .teach import TaughtFact
+
+        said = strip_filler(normalize(text))
+        data = self.model.ask_json(EXTRACT_SYSTEM, said, EXTRACT_SCHEMA, max_tokens=80) or {}
+        subject = str(data.get("subject", "")).strip().lower()
+        fact = str(data.get("fact", "")).strip()
+        said_words = set(tokens(said))
+        subject_words, fact_words = set(tokens(subject)), set(tokens(fact))
+        if not subject_words or not fact_words or len(fact) > 200:
+            return None
+        if not subject_words <= said_words or len(fact_words & said_words) < 0.6 * len(fact_words):
+            return None  # it added words you didn't say: don't file it
+        return TaughtFact(subject, fact if fact.endswith((".", "!", "?")) else fact + ".")
+
+    def _forget(self, text: str, route: Route) -> Answer:
+        what = re.sub(r"^(that|about|the fact that)\s+", "", FORGET.sub("", normalize(text)).strip())
+        hit = self._drawer1(what) if what else None
+        if hit is None:
+            return Answer(Label.NOT_SURE, "I don't have that in drawer 1, so there's nothing to forget. "
+                          "(Memories of events and core memories can't be removed this way.)", route, ("drawer1",))
+        # Take out every version of it, so an older one doesn't come back.
+        versions = [f for f in self.store.facts()
+                    if f.id == hit.id or (f.subject == hit.subject and self.matcher.similarity(f.fact, hit.fact) >= 0.5)]
+        for f in versions:
+            self.store.delete_fact(f.id)
+        return Answer(Label.REMOVED, f"Removed from drawer 1: {hit.fact}", route, ("drawer1",),
+                      tuple(f"removed fact #{f.id}: {f.fact}" for f in versions))
 
     def _event(self, text: str, route: Route) -> Answer:
         ev = extract_event(text)

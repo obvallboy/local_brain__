@@ -27,11 +27,22 @@ def clock():
     return NOW
 
 
+SNAPSHOT = {
+    "serial": [{"device": "COM3", "description": "USB-SERIAL CH340", "vid": "1a86", "pid": "7523"}],
+    "usb": [{"vid": "046d", "pid": "c52b", "product": "USB Receiver", "manufacturer": "Logitech", "bus": "1", "address": "4"}],
+    "storage": [], "network": [],
+}
+LABELS = {"serial:COM3": {"label": "Arduino Uno"}}
+
+
 def build(model, embedder):
     store = Store(now=clock)
     kwargs = {"store": store, "model": model, "network": SimulatedNetwork(dns_ok=False), "now": clock}
-    if embedder is not None and "embedder" in inspect.signature(FileCabinet).parameters:
+    params = inspect.signature(FileCabinet).parameters
+    if embedder is not None and "embedder" in params:
         kwargs["embedder"] = embedder
+    if "devices" in params:  # as inside the Device Integrator
+        kwargs["devices"], kwargs["labels"] = (lambda: SNAPSHOT), (lambda: LABELS)
     cab = FileCabinet(**kwargs)
     store.add_fact("sister", "Your sister's name is Maya.")
     store.add_fact("sister", "Your sister lives in Denver.")
@@ -44,6 +55,10 @@ def build(model, embedder):
     store.log_episode("Riverside Park", "walking", "Talked about weekend plans.", people="Jordan", ts=today + timedelta(minutes=10))
     store.log_episode("Farmers Market", "shopping", "Saw a truck selling peaches.", ts=NOW.replace(hour=10))
     store.log_episode("Rosa's Tacos", "dinner", "Ate dinner at Rosa's Tacos.", people="Maya", ts=yesterday)
+    # Dated episodes for time phrases (NOW is Wednesday 2026-11-25).
+    store.log_episode("Garage", "fixing", "Fixed the bike chain.", ts=datetime(2026, 11, 22, 16, 0))        # Sunday
+    store.log_episode("School", "watching", "Watched the robotics club demo.", ts=datetime(2026, 11, 23, 17, 0))  # Monday
+    store.log_episode("Ridge Trail", "hiking", "Hiked the ridge trail.", ts=datetime(2026, 11, 21, 10, 0))  # Saturday
     return cab
 
 
@@ -90,6 +105,34 @@ def run(model, embedder, which):
         cab.ask(event)
         a = cab.ask(question)
         score("remember events told in chat", a.label is Label.REMEMBER and word in a.text.lower(), f"{event!r} -> {question!r}: {a.render()}")
+
+    for statement, question, word in cases.split(cases.TEACH_NATURAL, which):
+        cab = build(model, embedder)
+        cab.ask(statement)
+        a = cab.ask(question)
+        score("learn from natural wording", a.label is Label.KNOW and word in a.text.lower(), f"{statement!r} -> {question!r}: {a.render()}")
+
+    for question, kind in cases.split(cases.DEVICES, which):
+        cab = build(model, embedder)
+        got = route_of(cab, question).kind
+        ok = got == kind and (kind != "devices" or cab.ask(question).label is Label.CHECKED)
+        score("device questions", ok, f"{question!r}: expected {kind}, got {got}")
+
+    for question, expect, words in cases.split(cases.RECALL_TIME, which):
+        a = build(model, embedder).ask(question)
+        if expect == "remember":
+            ok = a.label is Label.REMEMBER and any(w in a.text.lower() for w in words.split("|"))
+        else:
+            ok = a.label is Label.DONT_REMEMBER
+            hallucinated_memories += a.label is Label.REMEMBER
+        score("recall with time phrases", ok, f"{question!r}: {a.render()}")
+
+    for fact, forget, question in cases.split(cases.FORGET, which):
+        cab = build(model, embedder)
+        cab.ask(fact)
+        cab.ask(forget)
+        a = cab.ask(question)
+        score("forgetting on request", a.label is not Label.KNOW, f"{fact!r} / {forget!r} -> {question!r}: {a.render()}")
 
     for text, expected in cases.split(cases.CRISIS, which):
         a = build(model, embedder).ask(text)

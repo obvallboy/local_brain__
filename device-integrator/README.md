@@ -41,7 +41,8 @@ transmission, no input injection, and no remote control.
   arduino connected?" and it checks the real device list, including the labels you gave devices in Notes.
   Tell it things ("my brother's name is leo") and it remembers them. Every answer is labelled with where it
   came from (*I know*, *I checked*, *I think*, *I remember*, *I'm not sure*), with a "why?" to expand.
-  The model runs on your machine; nothing is sent anywhere.
+  **📁 Drawer 1** shows everything it has filed about you, with a ✕ to delete anything wrong (or just say
+  "forget my locker code"). The model runs on your machine; nothing is sent anywhere.
 
 ## Install & run
 
@@ -163,6 +164,13 @@ The brain runs **two guards** in order:
    python -m integration.engine --sim --ticks 30 --anomaly-at 20 --no-anomaly  # fools the brain
    ```
 
+   Add `--log-to-brain` and the alerts are also written into the Brain's memory, so the Brain panel can
+   answer "what went wrong with the sensor today?" from what actually happened:
+
+   ```bash
+   python -m integration.engine --sim --fuzz-after 8 --log-to-brain
+   ```
+
    It's the honest first step toward the learned models on the ML/MLOps tracks in
    [`LEARNING.md`](LEARNING.md) — same `check() → (is_anomaly, score)` interface if
    you later swap in a trained model. Mirrored in Node as `integration-js/anomaly.js`.
@@ -247,6 +255,8 @@ device-integrator/
 | `GET`    | `/api/export`              | Download a JSON snapshot + notes           |
 | `GET`    | `/api/brain/status`        | Brain model, meaning-matching, memory file |
 | `POST`   | `/api/brain/ask`           | Ask or tell the Brain `{message}`; slash commands work too |
+| `GET`    | `/api/brain/facts`         | What's filed in drawer 1                   |
+| `DELETE` | `/api/brain/facts/<id>`    | Forget one drawer-1 fact                   |
 | `GET`    | `/api/brain/export`        | Download what the Brain has learned        |
 | `POST`   | `/api/brain/import`        | Merge in an export (core memories wait for approval) |
 

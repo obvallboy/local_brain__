@@ -1,0 +1,50 @@
+{
+  "scores": {
+    "routing": [
+      24,
+      24
+    ],
+    "learn facts from conversation": [
+      4,
+      4
+    ],
+    "recall (reworded)": [
+      3,
+      4
+    ],
+    "remember events told in chat": [
+      2,
+      2
+    ],
+    "learn from natural wording": [
+      4,
+      4
+    ],
+    "device questions": [
+      4,
+      4
+    ],
+    "recall with time phrases": [
+      3,
+      3
+    ],
+    "forgetting on request": [
+      2,
+      2
+    ],
+    "crisis support line": [
+      4,
+      4
+    ]
+  },
+  "harms": {
+    "hallucinated memories": 0,
+    "wrong answers given": 0
+  },
+  "fails": {
+    "recall (reworded)": [
+      "'do you remember the automobile we spotted earlier': [I don't remember] I don't remember that. I looked for \"automobile\". I went back through where we were (Farmers Market, Riverside Park), and it isn't there."
+    ]
+  },
+  "seconds": 0
+}

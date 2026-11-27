@@ -119,6 +119,7 @@
       </div>
       <button id="brain-close" class="btn small" title="Close">✕</button>
     </div>
+    <div id="brain-facts" class="brain-facts hidden" aria-label="Drawer 1"></div>
     <div id="brain-log" class="brain-log">
       <p class="muted brain-hint">Ask about your hardware ("what's plugged in?", "is my arduino connected?"),
       tell it things ("my brother's name is leo"), or type <code>/help</code>. Every answer says where it came from.</p>
@@ -128,6 +129,7 @@
       <button class="btn primary">Send</button>
     </form>
     <div class="brain-foot">
+      <button id="brain-facts-toggle" class="btn small" type="button" title="See and delete what's filed about you">📁 Drawer 1</button>
       <a class="btn small" href="/api/brain/export" title="Save what the Brain has learned, to copy to your other computer">⇩ Export memory</a>
       <label class="btn small" title="Merge in a memory file from your other computer">⇧ Import memory
         <input id="brain-import" type="file" accept="application/json,.json" hidden /></label>

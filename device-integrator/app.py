@@ -185,6 +185,16 @@ def create_app(data_dir: str = DEFAULT_DATA_DIR,
         except RuntimeError as exc:  # e.g. the core values file was changed on disk
             return jsonify({"error": str(exc)}), 409
 
+    @app.get("/api/brain/facts")
+    def api_brain_facts():
+        return jsonify(app.config["ASSISTANT"].facts())
+
+    @app.delete("/api/brain/facts/<int:fact_id>")
+    def api_brain_forget(fact_id: int):
+        if not app.config["ASSISTANT"].forget(fact_id):
+            return jsonify({"error": f"no fact #{fact_id}"}), 404
+        return jsonify({"deleted": fact_id})
+
     @app.get("/api/brain/export")
     def api_brain_export():
         resp = jsonify(app.config["ASSISTANT"].export())
@@ -245,8 +255,9 @@ def main() -> None:
     assistant.warm_up_async()  # load the models in the background; the page opens right away
     app = create_app(data_dir, assistant=assistant, notes=notes)  # one notes store for the page and the Brain
     if args.host not in ("127.0.0.1", "localhost"):
-        print(f"⚠️  Binding to {args.host} — the console will be reachable by other "
-              "machines on your network. Only do this on a network you trust.")
+        print(f"⚠️  Binding to {args.host} — the console and the Brain (including Export memory, "
+              "with everything it knows about you) will be reachable by other machines on your "
+              "network. Only do this on a network you trust.")
     print(f"Device Integrator → http://{args.host}:{args.port}")
     app.run(host=args.host, port=args.port, debug=args.debug, threaded=True)
 

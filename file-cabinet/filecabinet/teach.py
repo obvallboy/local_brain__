@@ -34,8 +34,18 @@ class TaughtFact:
     fact: str
 
 
+_FILLER = re.compile(
+    r"^(fyi|btw|by the way|just so you know|for the record|note that|remember that|remember:|"
+    r"keep in mind( that)?|don't forget( that)?|dont forget( that)?|heads up)[,:]?\s+"
+)
+
+
 def extract_fact(text: str) -> TaughtFact | None:
     t = " ".join(text.strip().lower().replace("’", "'").split()).rstrip(".!")
+    t = _FILLER.sub("", t)
+    if m := re.match(r"^(?!(?:this|that|it|he|she|they|there|here|what|who)\b)([\w']+) is my ((?:[\w']+ ){0,2}[\w']+)$", t):
+        name, relation = m.group(1), m.group(2)
+        return TaughtFact(f"{relation} {name}", f"{name.title()} is your {relation}.")
     if m := re.match(r"^my ([\w' ]+?)(?:'s)? name is (.+)$", t):
         return TaughtFact(m.group(1), f"Your {m.group(1)}'s name is {m.group(2)}.")
     if m := re.match(r"^my ([\w' ]+?) is (?:named|called) (.+)$", t):
@@ -47,6 +57,12 @@ def extract_fact(text: str) -> TaughtFact | None:
     if m := re.match(r"^i (work|live|was born|grew up|study|go to|am from|'m from)\b", t):
         key = {"was born": "born", "grew up": "grew up", "go to": "go to", "am from": "from", "'m from": "from"}
         return TaughtFact(key.get(m.group(1), m.group(1)), second_person(t))
+    if m := re.match(r"^i (drive|own|play|speak|ride)\b", t):
+        return TaughtFact(m.group(1), second_person(t))
+    if m := re.match(r"^(?:i'm|i am) (allergic to|from) (.+)$", t):
+        return TaughtFact(m.group(1).split()[0], second_person(t))
+    if m := re.match(r"^(?:i'm|i am) (\d+)(?: years old)?$", t):
+        return TaughtFact("age, how old", f"You are {m.group(1)} years old.")  # "how old am i" finds it
     if re.match(r"^(i'm|i am) (a|an) ", t):
         return TaughtFact("who you are", second_person(t))
     return None

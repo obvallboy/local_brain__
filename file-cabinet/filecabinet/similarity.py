@@ -30,6 +30,9 @@ LEMMAS = {
     "wore": "wear", "wrote": "write", "spoke": "speak", "stood": "stand", "threw": "throw",
     "flew": "fly", "drew": "draw", "drank": "drink", "swam": "swim", "sang": "sing", "joined": "join",
     "watched": "watch", "talked": "talk", "called": "call", "named": "name",
+    # trouble words, so "what went wrong?" finds a logged problem
+    "wrong": "problem", "issue": "problem", "issues": "problem", "trouble": "problem", "fault": "problem",
+    "error": "problem", "errors": "problem", "problems": "problem",
 }
 
 _WORD = re.compile(r"[a-z0-9']+")

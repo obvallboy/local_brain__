@@ -106,7 +106,8 @@ function serialDevNode(d) {
     el("div", { class: "d-name" }, labelFor(key, d.device),
       el("span", { class: "d-badge" }, "serial")),
     el("div", { class: "d-meta" },
-      [d.description, d.manufacturer, (d.vid ? `${d.vid}:${d.pid}` : "")].filter(Boolean).join(" · ") || d.device));
+      [d.description, d.manufacturer, (d.vid ? `${d.vid}:${d.pid}` : "")]
+        .filter((v) => v && v.toLowerCase() !== "n/a").join(" · ") || d.device));  // pyserial says "n/a" for unnamed ports
 }
 function usbDevNode(d) {
   const key = keyOf("usb", d);
@@ -390,7 +391,7 @@ loadDevices();
 const LABEL_CLASS = {
   "I know": "lb-know", "Filed": "lb-filed", "I think": "lb-think", "I checked": "lb-checked",
   "I remember": "lb-remember", "From my core": "lb-core",
-  "I don't remember": "lb-unsure", "I'm not sure": "lb-unsure", "Command": "lb-cmd",
+  "I don't remember": "lb-unsure", "I'm not sure": "lb-unsure", "Command": "lb-cmd", "Removed": "lb-removed",
 };
 let brainStatusTimer = null;
 
@@ -455,6 +456,7 @@ $("#brain-form").addEventListener("submit", async (ev) => {
     pending.remove();
     brainReply(r);
     refreshBrainStatus();
+    if (!$("#brain-facts").classList.contains("hidden")) loadFacts();  // keep drawer 1 view current
   } catch (e) {
     pending.remove();
     brainMessage("bot", el("span", { class: "err" }, e.message));
@@ -477,4 +479,29 @@ $("#brain-import").addEventListener("change", async (ev) => {
     $("#brain-foot-status").textContent = e.message;
   }
   ev.target.value = "";
+});
+
+// Drawer 1: see what's filed about you, and delete anything wrong.
+async function loadFacts() {
+  const box = $("#brain-facts");
+  box.innerHTML = "";
+  box.append(el("h3", {}, "Drawer 1 · what I know about you"));
+  let facts;
+  try { facts = await api("/api/brain/facts"); }
+  catch (e) { box.append(el("p", { class: "err" }, e.message)); return; }
+  if (!facts.length) { box.append(el("p", { class: "muted" }, "Nothing filed yet.")); return; }
+  for (const f of facts.slice().reverse()) {
+    const del = el("button", { class: "btn small", title: "Forget this", type: "button" }, "✕");
+    del.addEventListener("click", async () => {
+      try { await api(`/api/brain/facts/${f.id}`, { method: "DELETE" }); loadFacts(); }
+      catch (e) { $("#brain-foot-status").textContent = e.message; }
+    });
+    box.append(el("div", { class: "fact-row" },
+      el("div", { class: "fact-text" }, f.fact, el("div", { class: "fact-subject" }, `#${f.id} · ${f.subject}`)), del));
+  }
+}
+$("#brain-facts-toggle").addEventListener("click", () => {
+  const box = $("#brain-facts");
+  box.classList.toggle("hidden");
+  if (!box.classList.contains("hidden")) loadFacts();
 });
