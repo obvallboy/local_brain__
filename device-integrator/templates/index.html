@@ -2,24 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Device Integrator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Devy</title>
+  <meta name="theme-color" content="#0b0f14" />
+  <meta name="color-scheme" content="dark" />
+  <!-- Add to Home Screen: opens full-screen like an app, with its own icon -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Devy" />
+  <link rel="apple-touch-icon" href="/static/icon-180.png" />
+  <link rel="icon" type="image/png" href="/static/icon-192.png" />
+  <link rel="manifest" href="/static/manifest.json" />
   <link rel="stylesheet" href="/static/styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <span class="logo">⚙️</span>
+      <img class="logo" src="/static/icon-192.png" alt="" width="40" height="40" />
       <div>
-        <h1>Device Integrator</h1>
-        <p class="tagline">Local workbench for inspecting &amp; tinkering with your own hardware</p>
+        <h1>Devy <span class="h1-sub">Device Integrator</span></h1>
+        <p class="tagline">Inspect and tinker with your own hardware, all on this machine</p>
       </div>
     </div>
     <div class="topbar-actions">
-      <span id="caps" class="caps" title="Available back-ends"></span>
-      <button id="brain-toggle" class="btn">🧠 Devy</button>
-      <button id="refresh" class="btn">↻ Refresh</button>
-      <a id="export" class="btn" href="/api/export">⇩ Export JSON</a>
+      <button id="brain-toggle" class="btn primary">🧠 Ask Devy</button>
+      <button id="refresh" class="btn" title="Scan again">↻ <span class="btn-label">Refresh</span></button>
+      <a id="export" class="btn ghost" href="/api/export" title="Download the full scan as raw JSON">⇩ <span class="btn-label">Export</span></a>
     </div>
   </header>
 
@@ -31,14 +40,16 @@
         <input id="filter" type="search" placeholder="filter…" />
       </div>
       <div id="device-list" class="device-list">
-        <p class="muted">Loading…</p>
+        <p class="muted pad">Loading…</p>
       </div>
+      <p id="caps" class="caps" title="Available back-ends"></p>
     </aside>
 
     <!-- Right: detail / console -->
     <section class="panel detail">
       <div id="detail-empty" class="empty">
-        <p>Select a device on the left to inspect it.</p>
+        <div class="empty-icon" aria-hidden="true">🔍</div>
+        <p><span class="wide-only">Pick a device on the left</span><span class="narrow-only">Tap a device above</span> to inspect it.</p>
         <p class="muted">Serial ports can be opened as a live console.</p>
       </div>
 

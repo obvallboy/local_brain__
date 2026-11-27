@@ -34,7 +34,7 @@ let consoleSession = null;    // {id, since, timer}
 
 // ---- device inventory ----------------------------------------------------
 async function loadDevices() {
-  $("#device-list").innerHTML = '<p class="muted">Scanning…</p>';
+  $("#device-list").innerHTML = '<p class="muted pad">Scanning…</p>';
   try {
     [snapshot, notes] = await Promise.all([api("/api/devices"), api("/api/notes")]);
   } catch (e) {
@@ -60,36 +60,71 @@ function labelFor(key, fallback) {
   return (n && n.label) || fallback;
 }
 
+// Which groups are folded shut. Remembered per browser; the empty built-in serial
+// ports start folded so only real hardware shows.
+const COLLAPSE_KEY = "di.collapsed";
+let collapsed = { placeholder: true };
+// On a phone, start with the long, rarely-needed groups folded too.
+if (window.matchMedia("(max-width: 760px)").matches) Object.assign(collapsed, { storage: true, network: true });
+try { collapsed = { ...collapsed, ...JSON.parse(localStorage.getItem(COLLAPSE_KEY) || "{}") }; } catch (_) {}
+function setCollapsed(id, value) {
+  collapsed[id] = value;
+  try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify(collapsed)); } catch (_) {}
+}
+
+const GROUP_ICON = { serial: "🔌", placeholder: "💤", usb: "🧩", storage: "💾", network: "📶" };
+
+function renderGroup(list, id, title, kind, items, renderer, filtering, hint) {
+  const open = filtering || !collapsed[id];
+  const group = el("section", { class: "group" + (open ? " open" : "") + (id === "placeholder" ? " quiet" : "") });
+  const head = el("button", { class: "group-head", type: "button", "aria-expanded": String(open) },
+    el("span", { class: "chev", "aria-hidden": "true" }, "›"),
+    el("span", { class: "g-icon", "aria-hidden": "true" }, GROUP_ICON[id] || "•"),
+    el("span", { class: "g-title" }, title),
+    el("span", { class: "count" }, String(items.length)));
+  head.addEventListener("click", () => {
+    const nowOpen = !group.classList.contains("open");
+    group.classList.toggle("open", nowOpen);
+    head.setAttribute("aria-expanded", String(nowOpen));
+    setCollapsed(id, !nowOpen);
+  });
+  const body = el("div", { class: "group-body" });
+  if (hint) body.append(el("p", { class: "group-hint" }, hint));
+  for (const d of items) {
+    const node = renderer(d);
+    node.addEventListener("click", () => select(kind, d));
+    if (selected && selected.kind === kind && selected.key === keyOf(kind, d)) node.classList.add("active");
+    body.append(node);
+  }
+  group.append(head, body);
+  list.append(group);
+}
+
 function renderList() {
   const filter = $("#filter").value.trim().toLowerCase();
   const list = $("#device-list");
   list.innerHTML = "";
+  const match = (items) => (items || []).filter((d) => JSON.stringify(d).toLowerCase().includes(filter));
 
+  const serial = match(snapshot.serial);
   const groups = [
-    ["Serial ports", "serial", snapshot.serial, serialDevNode],
-    ["USB devices", "usb", snapshot.usb, usbDevNode],
-    ["Storage", "storage", snapshot.storage, storageDevNode],
-    ["Network", "network", snapshot.network, networkDevNode],
+    ["serial", "Serial ports", "serial", serial.filter((d) => !d.placeholder), serialDevNode],
+    ["usb", "USB devices", "usb", match(snapshot.usb), usbDevNode],
+    ["storage", "Storage", "storage", match(snapshot.storage), storageDevNode],
+    ["network", "Network", "network", match(snapshot.network), networkDevNode],
+    ["placeholder", "Empty built-in serial ports", "serial", serial.filter((d) => d.placeholder), serialDevNode,
+     "Linux creates these ttyS ports whether or not anything is connected. A plugged-in board shows up above as ttyUSB or ttyACM."],
   ];
 
   let shown = 0;
-  for (const [title, kind, items, renderer] of groups) {
-    const matched = (items || []).filter((d) =>
-      JSON.stringify(d).toLowerCase().includes(filter)
-    );
-    if (!matched.length) continue;
-    list.append(el("div", { class: "group-title" }, title,
-      el("span", { class: "count" }, ` (${matched.length})`)));
-    for (const d of matched) {
-      const node = renderer(d);
-      node.addEventListener("click", () => select(kind, d));
-      if (selected && selected.kind === kind && selected.key === keyOf(kind, d))
-        node.classList.add("active");
-      list.append(node);
-      shown++;
-    }
+  for (const [id, title, kind, items, renderer, hint] of groups) {
+    if (!items.length) continue;
+    renderGroup(list, id, title, kind, items, renderer, Boolean(filter), hint);
+    shown += items.length;
   }
-  if (!shown) list.innerHTML = '<p class="muted">No devices match. Plug something in and Refresh.</p>';
+  if (!snapshot.serial?.some((d) => !d.placeholder) && !filter)
+    list.prepend(el("p", { class: "list-note" }, "No serial devices plugged in."));
+  if (!shown) list.innerHTML = '<p class="muted pad">No devices match. Plug something in and Refresh.</p>';
 }
 
 function keyOf(kind, d) {
@@ -112,7 +147,8 @@ function serialDevNode(d) {
 function usbDevNode(d) {
   const key = keyOf("usb", d);
   const name = d.product || d.manufacturer || `${d.vid}:${d.pid}`;
-  return el("div", { class: "device" },
+  const hub = (d.device_class_name || "").toLowerCase() === "hub";  // the computer's own plumbing
+  return el("div", { class: "device" + (hub ? " noise" : "") },
     el("div", { class: "d-name" }, labelFor(key, name),
       el("span", { class: "d-badge" }, d.device_class_name || "usb")),
     el("div", { class: "d-meta" },
@@ -155,6 +191,8 @@ function select(kind, d) {
   loadNotesInto(selected.key);
   resetConsole(kind === "serial" ? d.device : null);
   switchTab("info");
+  if (window.matchMedia("(max-width: 760px)").matches)
+    $("#detail-view").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function kvRows(obj) {

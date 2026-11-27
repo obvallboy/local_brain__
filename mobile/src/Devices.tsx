@@ -87,7 +87,10 @@ export default function Devices({ base }: { base: string }) {
     }
   };
 
-  const serial = snap?.serial ?? [];
+  // Empty built-in ttyS nodes are flagged by the server; keep them out of the list.
+  const allSerial = snap?.serial ?? [];
+  const serial = allSerial.filter((d) => !d.placeholder);
+  const hiddenPorts = allSerial.length - serial.length;
   const usb = (snap?.usb ?? []).filter((d) => (d.device_class_name || '').toLowerCase() !== 'hub');
   const storage = snap?.storage ?? [];
   const network = (snap?.network ?? []).filter((n) => n.is_up !== false);
@@ -179,6 +182,12 @@ export default function Devices({ base }: { base: string }) {
         );
       })}
 
+      {hiddenPorts > 0 && (
+        <Text style={styles.hint}>
+          {serial.length === 0 ? 'No serial devices plugged in. ' : ''}
+          {hiddenPorts} empty built-in serial ports hidden.
+        </Text>
+      )}
       {usb.length > 0 && <Text style={styles.section}>USB devices</Text>}
       {usb.map((d, i) => (
         <View key={i} style={styles.card}>
@@ -218,6 +227,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: 12, gap: 8 },
   section: { color: C.accent, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: 10, marginBottom: 2 },
+  hint: { color: C.muted, fontSize: 12, marginTop: 6 },
   card: { backgroundColor: C.panel, borderWidth: 1, borderColor: C.border, borderRadius: 10, padding: 12 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   name: { color: C.text, fontSize: 15, fontWeight: '600' },

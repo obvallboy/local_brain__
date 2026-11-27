@@ -73,3 +73,19 @@ def test_usb_detail_bad_path_is_safe():
     detail = details.usb_detail("/does/not/exist", "10c4", "ea60", tty="ttyUSB0")
     assert detail["attrs"] == {}
     assert detail["interfaces"] == []
+
+
+def test_placeholder_ports_are_flagged():
+    from integrator.discovery import is_placeholder_port
+
+    assert is_placeholder_port({"name": "ttyS31", "device": "/dev/ttyS31", "hwid": "n/a", "vid": None})
+    assert is_placeholder_port({"name": "ttyS0", "device": "/dev/ttyS0", "hwid": None, "vid": None})
+    # a real onboard UART reports a hwid; USB adapters have a vid and a different name
+    assert not is_placeholder_port({"name": "ttyS0", "device": "/dev/ttyS0", "hwid": "PNP0501", "vid": None})
+    assert not is_placeholder_port({"name": "ttyUSB0", "device": "/dev/ttyUSB0", "hwid": "n/a", "vid": None})
+    assert not is_placeholder_port({"name": "ttyACM0", "device": "/dev/ttyACM0", "hwid": "USB VID:PID=2e8a:0005", "vid": "2e8a"})
+
+
+def test_every_serial_port_has_placeholder_flag():
+    for p in discovery.list_serial_ports():
+        assert isinstance(p["placeholder"], bool)

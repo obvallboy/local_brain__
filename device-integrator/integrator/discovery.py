@@ -48,7 +48,7 @@ def capabilities() -> Dict[str, Any]:
 # --------------------------------------------------------------------------
 # Serial ports
 # --------------------------------------------------------------------------
-def list_serial_ports() -> List[Dict[str, Any]]:
+def _scan_serial_ports() -> List[Dict[str, Any]]:
     """List serial ports. Uses pyserial when available, otherwise globs the
     common Linux device nodes so dev boards still show up."""
     ports: List[Dict[str, Any]] = []
@@ -106,6 +106,28 @@ def list_serial_ports() -> List[Dict[str, Any]]:
                     "source": "glob",
                 }
             )
+    return ports
+
+
+_LEGACY_UART = re.compile(r"^ttyS\d+$")
+
+
+def is_placeholder_port(port: Dict[str, Any]) -> bool:
+    """True for the empty legacy UART nodes (/dev/ttyS0-31) Linux creates whether or not
+    any hardware is behind them. A real onboard UART reports a hwid (e.g. PNP0501),
+    and USB adapters show up as ttyUSB*/ttyACM* with a vid, so neither is hidden."""
+    if not _LEGACY_UART.match(port.get("name") or os.path.basename(port.get("device") or "")):
+        return False
+    if port.get("vid"):
+        return False
+    return (port.get("hwid") or "n/a").strip().lower() in ("n/a", "")
+
+
+def list_serial_ports() -> List[Dict[str, Any]]:
+    """Serial ports, each flagged ``placeholder`` when it's an empty legacy UART node."""
+    ports = _scan_serial_ports()
+    for p in ports:
+        p["placeholder"] = is_placeholder_port(p)
     return ports
 
 

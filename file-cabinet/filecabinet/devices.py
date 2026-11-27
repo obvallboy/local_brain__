@@ -105,7 +105,8 @@ def build(snapshot: dict, labels: dict | None = None) -> list[Device]:
         info = identify(d.get("vid"), d.get("pid"), _clean(d.get("description")) or _clean(d.get("product")))
         out.append(Device("serial", name, d.get("device") or "", _join(
             note.get("label"), note.get("note"), d.get("description"), d.get("manufacturer"),
-            d.get("product"), d.get("device"), vidpid, info.name if info else None), info=info))
+            d.get("product"), d.get("device"), vidpid, info.name if info else None),
+            bool(d.get("placeholder")), info=info))  # empty ttyS nodes: searchable, not summarized
     for d in snapshot.get("usb") or []:
         key = d.get("key") or f"usb:{d.get('vid')}:{d.get('pid')}"
         note = labels.get(key) or {}

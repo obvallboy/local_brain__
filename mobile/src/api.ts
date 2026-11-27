@@ -59,7 +59,7 @@ export function ask(base: string, message: string): Promise<AskResult> {
   });
 }
 
-export type SerialPort = { device?: string; description?: string; vid?: string; pid?: string; key?: string };
+export type SerialPort = { device?: string; description?: string; vid?: string; pid?: string; key?: string; placeholder?: boolean };
 export type UsbDevice = { product?: string; manufacturer?: string; vid?: string; pid?: string; device_class_name?: string };
 export type StorageDevice = { device?: string; mountpoint?: string; fstype?: string };
 export type NetIface = { name?: string; is_up?: boolean; addresses?: { address?: string }[]; mac?: string };
