@@ -86,3 +86,15 @@ export function getDevices(base: string): Promise<DeviceSnapshot> {
 export function serialScan(base: string, port: string): Promise<ScanResult> {
   return req<ScanResult>(base, `/api/brain/serial-scan?port=${encodeURIComponent(port)}`, undefined, 20000);
 }
+
+export type NetScanResult = {
+  host: string;
+  open_ports: number[];
+  guess: string | null;
+  steps: string[];
+  say: string;
+};
+
+export function netScan(base: string, host: string): Promise<NetScanResult> {
+  return req<NetScanResult>(base, `/api/brain/net-scan?host=${encodeURIComponent(host)}`, undefined, 25000);
+}

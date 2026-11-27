@@ -55,6 +55,6 @@ remembered. Then ask Devy anything, or tap a quick button.
 - **This hasn't been run on a physical iPhone from here** — it typechecks and bundles cleanly
   (`npx tsc --noEmit`, `npx expo export`), but the first real-device run is yours to try. If
   anything's off, tell me what you see.
-- **Two tabs:** **Chat** (ask/tell Devy) and **Devices** (what's plugged into the server, with a **Scan**
-  button on each serial port that finds its baud rate and recognizes what's answering). Guided jobs in the
-  app are the next follow-up.
+- **Two tabs:** **Chat** (ask/tell Devy) and **Devices** — what's plugged into the server (with a **Scan**
+  button on each serial port) plus a box to **scan a device on your Wi-Fi** by IP (ESP32, router, camera…).
+  Guided jobs in the app are the next follow-up.

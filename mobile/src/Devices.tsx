@@ -9,18 +9,33 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
-import { DeviceSnapshot, getDevices, ScanResult, serialScan } from './api';
+import { DeviceSnapshot, getDevices, netScan, NetScanResult, ScanResult, serialScan } from './api';
 import { C } from './theme';
 
 type Scan = { loading: boolean; result?: ScanResult; error?: string };
+type Net = { loading: boolean; result?: NetScanResult; error?: string };
 
 export default function Devices({ base }: { base: string }) {
   const [snap, setSnap] = useState<DeviceSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [scans, setScans] = useState<Record<string, Scan>>({});
+  const [netHost, setNetHost] = useState('');
+  const [net, setNet] = useState<Net | null>(null);
+
+  const scanNet = async () => {
+    const host = netHost.trim();
+    if (!host) return;
+    setNet({ loading: true });
+    try {
+      setNet({ loading: false, result: await netScan(base, host) });
+    } catch (e) {
+      setNet({ loading: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,6 +82,29 @@ export default function Devices({ base }: { base: string }) {
         </Text>
       )}
       {!error && !snap && <ActivityIndicator color={C.muted} style={{ marginTop: 24 }} />}
+
+      <Text style={styles.section}>Scan a device on your network</Text>
+      <View style={styles.card}>
+        <View style={styles.row}>
+          <TextInput
+            style={styles.netInput}
+            value={netHost}
+            onChangeText={setNetHost}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="numbers-and-punctuation"
+            placeholder="192.168.1.50 (an ESP32, router, camera…)"
+            placeholderTextColor={C.muted}
+            onSubmitEditing={scanNet}
+            returnKeyType="search"
+          />
+          <Pressable style={[styles.btn, net?.loading && styles.btnDisabled]} onPress={scanNet} disabled={net?.loading}>
+            {net?.loading ? <ActivityIndicator color={C.text} /> : <Text style={styles.btnText}>Scan</Text>}
+          </Pressable>
+        </View>
+        {net?.result && <Text style={styles.scan}>{net.result.say}</Text>}
+        {net?.error && <Text style={[styles.scan, { color: C.err }]}>{net.error}</Text>}
+      </View>
 
       {serial.length > 0 && <Text style={styles.section}>Serial ports</Text>}
       {serial.map((d, i) => {
@@ -139,6 +177,17 @@ const styles = StyleSheet.create({
   name: { color: C.text, fontSize: 15, fontWeight: '600' },
   meta: { color: C.muted, fontSize: 12, marginTop: 2, fontFamily: 'monospace' },
   scan: { color: C.text, fontSize: 13, lineHeight: 19, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: C.border },
+  netInput: {
+    flex: 1,
+    backgroundColor: C.bg,
+    color: C.text,
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 14,
+  },
   btn: { borderWidth: 1, borderColor: C.border, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: C.panel2 },
   btnText: { color: C.text, fontSize: 13 },
   btnDisabled: { opacity: 0.6 },

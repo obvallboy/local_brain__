@@ -259,6 +259,7 @@ device-integrator/
 | `GET`    | `/api/brain/status`        | Brain model, meaning-matching, memory file |
 | `POST`   | `/api/brain/ask`           | Ask or tell Devy `{message}`; slash commands work too |
 | `GET`    | `/api/brain/serial-scan`   | Find a serial port's baud and recognize what's answering `{port}` |
+| `GET`    | `/api/brain/net-scan`      | Probe a host on your network and say what it is `{host}` |
 | `GET`    | `/api/brain/facts`         | What's filed in drawer 1                   |
 | `DELETE` | `/api/brain/facts/<id>`    | Forget one drawer-1 fact                   |
 | `GET`    | `/api/brain/export`        | Download what the Brain has learned        |
@@ -287,6 +288,13 @@ Devy can look at a serial port and tell you its baud rate and what's answering (
 prompt, a Linux login, U-Boot, an ESP boot log, a GPS...), with a plain next step. The logic is in
 `filecabinet/serialscan.py` (offline, tested); `integrator/serial_help.scan(port)` runs it on a real
 port with pyserial. `GET /api/brain/serial-scan?port=/dev/ttyUSB0` returns the summary.
+
+### Network device helper
+
+Devices with their own radio can be reached over Wi-Fi. `filecabinet/netscan.py` recognizes a host from its
+open ports and banners (an ESP32 OTA port, a router, a camera, a printer, SSH/web...), with how to reach it;
+`integrator/network_help.scan(host)` probes a real host with sockets. `GET /api/brain/net-scan?host=192.168.1.50`
+returns the summary. It only probes hosts you point it at — your own devices.
 
 ## Tests
 

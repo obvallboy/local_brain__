@@ -203,6 +203,14 @@ def create_app(data_dir: str = DEFAULT_DATA_DIR,
         from integrator.serial_help import scan
         return jsonify(scan(port))
 
+    @app.get("/api/brain/net-scan")
+    def api_brain_net_scan():
+        host = (request.args.get("host") or "").strip()
+        if not host:
+            return jsonify({"error": "host is required"}), 400
+        from integrator.network_help import scan
+        return jsonify(scan(host))
+
     @app.get("/api/brain/export")
     def api_brain_export():
         resp = jsonify(app.config["ASSISTANT"].export())
