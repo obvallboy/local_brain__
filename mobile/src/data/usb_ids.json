@@ -1,0 +1,53 @@
+{
+  "_about": "Offline knowledge for recognizing dev boards and USB-serial adapters by their USB id (vid:pid) or, as a fallback, their product name. Own-hardware tinkering. Not exhaustive; an unknown device is reported as unknown, never guessed. Voltages/bauds are the common defaults, not guarantees.",
+  "exact": {
+    "2e8a:0003": {"name": "Raspberry Pi Pico (BOOTSEL mode)", "kind": "bootloader", "chip": "RP2040", "voltage": "3.3 V", "tools": ["drag-and-drop UF2"], "languages": ["MicroPython", "CircuitPython", "C/C++"], "note": "It shows up as a drive named RPI-RP2. Copy a .uf2 file onto it to flash. Hold BOOTSEL while plugging in to get here."},
+    "2e8a:0005": {"name": "Raspberry Pi Pico (running CircuitPython/MicroPython)", "kind": "board", "chip": "RP2040", "voltage": "3.3 V", "baud": "115200", "tools": ["Thonny", "mpremote", "rshell", "ampy"], "languages": ["MicroPython", "CircuitPython"], "note": "A serial (CDC) prompt. MicroPython answers at the >>> REPL."},
+    "2e8a:000a": {"name": "Raspberry Pi Pico (Pico SDK / C)", "kind": "board", "chip": "RP2040", "voltage": "3.3 V", "baud": "115200", "tools": ["picotool", "Pico SDK"], "languages": ["C/C++"], "note": "A C program built with the Pico SDK, exposing a USB serial port."},
+    "2341:0043": {"name": "Arduino Uno R3", "kind": "board", "chip": "ATmega328P", "voltage": "5 V", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli", "avrdude"], "languages": ["Arduino C++"], "note": "The classic Uno. 5 V logic — do not wire straight to 3.3 V-only chips."},
+    "2341:0001": {"name": "Arduino Uno", "kind": "board", "chip": "ATmega328P", "voltage": "5 V", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli", "avrdude"], "languages": ["Arduino C++"]},
+    "2341:0042": {"name": "Arduino Mega 2560 R3", "kind": "board", "chip": "ATmega2560", "voltage": "5 V", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli", "avrdude"], "languages": ["Arduino C++"]},
+    "2341:0010": {"name": "Arduino Mega 2560", "kind": "board", "chip": "ATmega2560", "voltage": "5 V", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli", "avrdude"], "languages": ["Arduino C++"]},
+    "2341:0036": {"name": "Arduino Leonardo (bootloader)", "kind": "bootloader", "chip": "ATmega32U4", "voltage": "5 V", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli", "avrdude"], "languages": ["Arduino C++"]},
+    "2341:8036": {"name": "Arduino Leonardo", "kind": "board", "chip": "ATmega32U4", "voltage": "5 V", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli", "avrdude"], "languages": ["Arduino C++"], "note": "Native USB, so it can also act as a keyboard/mouse."},
+    "2341:8037": {"name": "Arduino Micro", "kind": "board", "chip": "ATmega32U4", "voltage": "5 V", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli", "avrdude"], "languages": ["Arduino C++"]},
+    "2341:804d": {"name": "Arduino Micro (bootloader)", "kind": "bootloader", "chip": "ATmega32U4", "voltage": "5 V", "tools": ["avrdude"], "languages": ["Arduino C++"]},
+    "10c4:ea60": {"name": "Silicon Labs CP2102/CP210x USB-UART bridge", "kind": "bridge", "chip": "CP210x", "baud": "115200", "tools": ["any serial console", "esptool (if an ESP is behind it)"], "languages": [], "note": "A USB-to-serial chip, not a board. Very common in front of ESP32/ESP8266 boards (NodeMCU), but the thing behind it could be anything."},
+    "1a86:7523": {"name": "QinHeng CH340 USB-serial", "kind": "bridge", "chip": "CH340", "baud": "115200", "tools": ["any serial console", "esptool (if an ESP is behind it)"], "languages": [], "note": "A USB-to-serial chip, not a board. Common on Arduino clones and ESP boards. On Linux it just works; some setups want the ch341 driver."},
+    "1a86:55d4": {"name": "QinHeng CH9102 USB-serial", "kind": "bridge", "chip": "CH9102", "baud": "115200", "tools": ["any serial console"], "languages": [], "note": "A USB-to-serial chip, not a board."},
+    "0403:6001": {"name": "FTDI FT232R USB-UART", "kind": "bridge", "chip": "FT232R", "baud": "115200", "tools": ["any serial console"], "languages": [], "note": "A USB-to-serial chip, not a board. Logic level depends on the breakout (often a 3.3/5 V jumper)."},
+    "0403:6015": {"name": "FTDI FT231X USB-UART", "kind": "bridge", "chip": "FT231X", "baud": "115200", "tools": ["any serial console"], "languages": [], "note": "A USB-to-serial chip, not a board."},
+    "067b:2303": {"name": "Prolific PL2303 USB-serial", "kind": "bridge", "chip": "PL2303", "baud": "115200", "tools": ["any serial console"], "languages": [], "note": "A USB-to-serial chip, not a board. Watch for counterfeit chips on Windows."},
+    "0d28:0204": {"name": "BBC micro:bit", "kind": "board", "chip": "nRF52833 / nRF51 (via DAPLink)", "voltage": "3.3 V", "baud": "115200", "tools": ["drag-and-drop HEX", "MakeCode", "Mu"], "languages": ["MicroPython", "MakeCode blocks", "C/C++"], "note": "Shows up as a drive (MICROBIT) and a serial port. Copy a .hex to flash."},
+    "16c0:0483": {"name": "Teensy (serial)", "kind": "board", "chip": "various (PJRC Teensy)", "voltage": "3.3 V", "baud": "115200", "tools": ["Teensy Loader", "Arduino IDE + Teensyduino"], "languages": ["Arduino C++"]},
+    "16c0:0478": {"name": "Teensy (HalfKay bootloader)", "kind": "bootloader", "chip": "various (PJRC Teensy)", "voltage": "3.3 V", "tools": ["Teensy Loader"], "languages": ["Arduino C++"]},
+    "0483:df11": {"name": "STM32 DFU bootloader", "kind": "bootloader", "chip": "STM32", "voltage": "3.3 V", "tools": ["dfu-util", "STM32CubeProgrammer"], "languages": ["C/C++", "Rust", "MicroPython"], "note": "In DFU mode (BOOT0 high). Flash with dfu-util."},
+    "0483:5740": {"name": "STM32 virtual COM port", "kind": "board", "chip": "STM32", "voltage": "3.3 V", "baud": "115200", "tools": ["STM32CubeProgrammer", "any serial console"], "languages": ["C/C++", "Rust", "MicroPython"]},
+    "04d8:00dd": {"name": "Microchip MCP2221 USB bridge", "kind": "bridge", "chip": "MCP2221", "voltage": "3.3/5 V", "baud": "115200", "tools": ["any serial console"], "languages": [], "note": "USB to UART + I2C/GPIO. A bridge chip, not a board."}
+  },
+  "vendor": {
+    "2e8a": {"name": "Raspberry Pi RP2040 board", "kind": "board", "chip": "RP2040", "voltage": "3.3 V", "baud": "115200", "tools": ["Thonny", "mpremote", "picotool"], "languages": ["MicroPython", "CircuitPython", "C/C++"], "note": "A Raspberry Pi RP2040 device (Pico or a Pico-based board)."},
+    "2341": {"name": "Arduino board", "kind": "board", "voltage": "5 V (most) / 3.3 V (some)", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli", "avrdude"], "languages": ["Arduino C++"]},
+    "2a03": {"name": "Arduino board (arduino.org)", "kind": "board", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli"], "languages": ["Arduino C++"]},
+    "239a": {"name": "Adafruit board", "kind": "board", "voltage": "3.3 V", "baud": "115200", "tools": ["CircuitPython (drag-and-drop UF2)", "Mu", "Arduino IDE"], "languages": ["CircuitPython", "Arduino C++"], "note": "An Adafruit board — most run CircuitPython and appear as a CIRCUITPY drive."},
+    "303a": {"name": "Espressif ESP32-S2/S3/C3 (native USB)", "kind": "board", "chip": "ESP32-S2/S3/C3", "voltage": "3.3 V", "baud": "115200", "tools": ["esptool", "Arduino IDE", "ESP-IDF", "Thonny (MicroPython)"], "languages": ["Arduino C++", "MicroPython", "C (ESP-IDF)"], "note": "An Espressif ESP32 chip with built-in USB."},
+    "1b4f": {"name": "SparkFun board", "kind": "board", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli"], "languages": ["Arduino C++", "CircuitPython"]},
+    "1209": {"name": "Open-hardware board (pid.codes)", "kind": "board", "baud": "115200", "tools": ["depends on the board"], "languages": []}
+  },
+  "hints": [
+    ["rp2040", {"name": "Raspberry Pi RP2040 board", "kind": "board", "chip": "RP2040", "voltage": "3.3 V", "baud": "115200", "tools": ["Thonny", "mpremote", "picotool"], "languages": ["MicroPython", "CircuitPython", "C/C++"]}],
+    ["pico", {"name": "Raspberry Pi Pico", "kind": "board", "chip": "RP2040", "voltage": "3.3 V", "baud": "115200", "tools": ["Thonny", "mpremote", "picotool"], "languages": ["MicroPython", "CircuitPython", "C/C++"]}],
+    ["esp32", {"name": "ESP32 board", "kind": "board", "chip": "ESP32", "voltage": "3.3 V", "baud": "115200", "tools": ["esptool", "Arduino IDE", "ESP-IDF", "Thonny"], "languages": ["Arduino C++", "MicroPython", "C (ESP-IDF)"]}],
+    ["esp8266", {"name": "ESP8266 board", "kind": "board", "chip": "ESP8266", "voltage": "3.3 V", "baud": "74880/115200", "tools": ["esptool", "Arduino IDE", "Thonny"], "languages": ["Arduino C++", "MicroPython"]}],
+    ["nodemcu", {"name": "NodeMCU (ESP8266/ESP32)", "kind": "board", "chip": "ESP8266 or ESP32", "voltage": "3.3 V", "baud": "115200", "tools": ["esptool", "Arduino IDE"], "languages": ["Arduino C++", "MicroPython"]}],
+    ["arduino", {"name": "Arduino board", "kind": "board", "baud": "115200", "tools": ["Arduino IDE", "arduino-cli"], "languages": ["Arduino C++"]}],
+    ["micro:bit", {"name": "BBC micro:bit", "kind": "board", "chip": "nRF52833", "voltage": "3.3 V", "baud": "115200", "tools": ["MakeCode", "Mu", "drag-and-drop HEX"], "languages": ["MicroPython", "MakeCode blocks"]}],
+    ["microbit", {"name": "BBC micro:bit", "kind": "board", "chip": "nRF52833", "voltage": "3.3 V", "baud": "115200", "tools": ["MakeCode", "Mu"], "languages": ["MicroPython", "MakeCode blocks"]}],
+    ["stm32", {"name": "STM32 board", "kind": "board", "chip": "STM32", "voltage": "3.3 V", "baud": "115200", "tools": ["STM32CubeProgrammer", "dfu-util", "PlatformIO"], "languages": ["C/C++", "Rust", "MicroPython"]}],
+    ["cp210", {"name": "CP210x USB-UART bridge", "kind": "bridge", "chip": "CP210x", "baud": "115200", "tools": ["any serial console"], "languages": []}],
+    ["ch340", {"name": "CH340 USB-serial", "kind": "bridge", "chip": "CH340", "baud": "115200", "tools": ["any serial console"], "languages": []}],
+    ["ch341", {"name": "CH341 USB-serial", "kind": "bridge", "chip": "CH341", "baud": "115200", "tools": ["any serial console"], "languages": []}],
+    ["ft232", {"name": "FTDI FT232 USB-UART", "kind": "bridge", "chip": "FT232", "baud": "115200", "tools": ["any serial console"], "languages": []}],
+    ["ftdi", {"name": "FTDI USB-serial", "kind": "bridge", "chip": "FTDI", "baud": "115200", "tools": ["any serial console"], "languages": []}]
+  ]
+}

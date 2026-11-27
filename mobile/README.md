@@ -55,6 +55,7 @@ remembered. Then ask Devy anything, or tap a quick button.
 - **This hasn't been run on a physical iPhone from here** — it typechecks and bundles cleanly
   (`npx tsc --noEmit`, `npx expo export`), but the first real-device run is yours to try. If
   anything's off, tell me what you see.
-- **Two tabs:** **Chat** (ask/tell Devy) and **Devices** — what's plugged into the server (with a **Scan**
-  button on each serial port) plus a box to **scan a device on your Wi-Fi** by IP (ESP32, router, camera…).
-  Guided jobs in the app are the next follow-up.
+- **Three tabs.** **Chat** and **Devices** talk to the Devy server (Chat = ask/tell Devy; Devices = what's
+  plugged into the server, with a serial **Scan** button and a **scan a device on your Wi-Fi** box).
+  **Reference** works **offline, phone-only, no server** — look up any board/chip and how to program it
+  (from the bundled registry), plus a serial/network cheat-sheet. Useful even with nothing else around.

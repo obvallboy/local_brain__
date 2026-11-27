@@ -9,11 +9,12 @@ import { Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } 
 import { getStatus, normalizeBase, Status } from './src/api';
 import Chat from './src/Chat';
 import Devices from './src/Devices';
+import Reference from './src/Reference';
 import { C } from './src/theme';
 
 const URL_KEY = 'devy.serverUrl';
 const DEFAULT_URL = 'http://192.168.1.100:5000';
-type Tab = 'chat' | 'devices';
+type Tab = 'chat' | 'devices' | 'reference';
 
 export default function App() {
   const [serverUrl, setServerUrl] = useState(DEFAULT_URL);
@@ -123,16 +124,16 @@ export default function App() {
       )}
 
       <View style={styles.tabs}>
-        {(['chat', 'devices'] as Tab[]).map((t) => (
+        {(['chat', 'devices', 'reference'] as Tab[]).map((t) => (
           <Pressable key={t} style={[styles.tab, tab === t && styles.tabActive]} onPress={() => setTab(t)}>
             <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'chat' ? 'Chat' : 'Devices'}
+              {t === 'chat' ? 'Chat' : t === 'devices' ? 'Devices' : 'Reference'}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      {tab === 'chat' ? <Chat base={base} /> : <Devices base={base} />}
+      {tab === 'chat' ? <Chat base={base} /> : tab === 'devices' ? <Devices base={base} /> : <Reference />}
     </SafeAreaView>
   );
 }
