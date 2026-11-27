@@ -17,6 +17,7 @@ Pi) to do it for real. Own-hardware scope throughout — repair, reuse, learning
 | **`models/`** | Not committed. The Brain's model files, downloaded with `python brain_setup.py`. |
 | **`brain_setup.py`** | One-time setup per computer: downloads the Brain's models and calibrates them. |
 | **`mobile/`** | **Devy for iPhone** — an Expo (React Native) app that is a phone screen for the Devy server over your LAN or Tailscale. |
+| **`minis-skill/`** | A skill for the [Minis](https://github.com/OpenMinis) iPhone agent, so Minis can drive Devy on your Pi over the network (an alternative to the Expo app). |
 | **`ROADMAP.md`** | The living plan: the vision, the unified-language design, and the phases ahead. |
 | **`device-bench/`** | The browser **simulator** (snapshot of the live artifact) + runnable engine test suites (`net.js`, `sb8.js`, `cell.js`, `spiflash.js`). Live: <https://claude.ai/artifact/44dTeFdXpHKR7K7jsRbPg7> |
 | **`pibench/`** | Turns a **Raspberry Pi** into a reconfigurable hardware tool via *profiles* (`spi-bios`, `i2c-eeprom`, `uart-console`, `aw15r2`) + the Alienware BIOS-unlock runbook. |

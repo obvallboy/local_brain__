@@ -198,6 +198,8 @@ which also takes Python-helper steps (not just shell), so a job can use the seri
 
 ### Ongoing / polish (fits around the phases)
 The Brain panel is named **Devy** in the UI.
+A phone can reach Devy two ways: the Expo app (`mobile/`), or the Minis iOS agent via a skill
+(`minis-skill/`) that curls Devy's endpoints — if the Minis sandbox has network access (untested).
 Streaming answers (word by word); a "that's wrong" button that fixes a fact in place; automatic
 daily backups of each machine's memory (pull this **early** — it's the only copy per machine);
 approve/reject buttons for core-memory proposals; a people/things view ("what do you know about
