@@ -58,3 +58,31 @@ export function ask(base: string, message: string): Promise<AskResult> {
     body: JSON.stringify({ message }),
   });
 }
+
+export type SerialPort = { device?: string; description?: string; vid?: string; pid?: string; key?: string };
+export type UsbDevice = { product?: string; manufacturer?: string; vid?: string; pid?: string; device_class_name?: string };
+export type StorageDevice = { device?: string; mountpoint?: string; fstype?: string };
+export type NetIface = { name?: string; is_up?: boolean; addresses?: { address?: string }[]; mac?: string };
+export type DeviceSnapshot = {
+  capabilities?: { platform?: string };
+  serial: SerialPort[];
+  usb: UsbDevice[];
+  storage: StorageDevice[];
+  network: NetIface[];
+};
+
+export type ScanResult = {
+  baud: number | null;
+  what: string | null;
+  next_step: string | null;
+  sample: string;
+  say: string;
+};
+
+export function getDevices(base: string): Promise<DeviceSnapshot> {
+  return req<DeviceSnapshot>(base, '/api/devices', undefined, 10000);
+}
+
+export function serialScan(base: string, port: string): Promise<ScanResult> {
+  return req<ScanResult>(base, `/api/brain/serial-scan?port=${encodeURIComponent(port)}`, undefined, 20000);
+}
