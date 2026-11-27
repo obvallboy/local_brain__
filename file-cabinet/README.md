@@ -182,6 +182,21 @@ wrong answers.
 The held-out half is not perfectly unseen: two bug fixes (a question being treated as small talk, and an
 over-long fact pattern) came from its failures, and its totals hinted that the rules should run before the model.
 
+### Round 2
+
+32 more cases, written before the round-2 changes: facts said naturally ("remember that…", "leo is my
+brother"), forgetting on request, device questions that should and shouldn't check the hardware, and time
+phrases ("on monday", "three days ago"). Held-out half:
+
+| Version | New categories | Whole scorecard | Wrong answers | Invented memories |
+| --- | --- | --- | --- | --- |
+| Before round 2, no model | 10/13 device questions only; 0% natural wording, 0% forgetting, 67% time | 82% (42/51) | 0 | 1 |
+| After round 2, no model | 13/13 (100%) | 96% (49/51) | 0 | 0 |
+| After round 2, 1.5B model | 13/13 (100%) | 90% (62/69) | 0 | 0 |
+| After round 2, 3B model | 13/13 (100%) | 93% (64/69) | 1 | 0 |
+
+(The model rows include the general-knowledge questions, which the no-model rows can't answer.)
+
 ## Differences from the design doc
 
 - Two labels were added: **I remember** (found in the episode log or core memories) and
