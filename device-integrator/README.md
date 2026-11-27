@@ -263,6 +263,21 @@ device-integrator/
 | `GET`    | `/api/brain/export`        | Download what the Brain has learned        |
 | `POST`   | `/api/brain/import`        | Merge in an export (core memories wait for approval) |
 
+### Guided jobs (the model does the digital part)
+
+A **guided job** is a hardware task where you do the physical steps and the Brain does the digital
+ones. The first is dumping the Alienware BIOS chip (`integrator/hardware_jobs.py`, built on the pibench
+`aw15r2` profile). The engine (`filecabinet/jobs.py`) runs the safe digital steps itself — probe, read
+twice, verify, back up — and only stops to ask you for a **physical** action ("clip the chip, say done")
+or a plain-language **"go"** before anything irreversible (writing a chip). It narrates every step, and
+catches a bad read instead of trusting it. Try the walkthrough with a simulated flasher:
+
+```python
+from integrator.hardware_jobs import SimFlashrom, bios_dump_job
+from filecabinet.jobs import Session
+s = Session(bios_dump_job(), SimFlashrom()); print(s.start().say)
+```
+
 ## Tests
 
 ```bash

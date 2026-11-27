@@ -150,9 +150,12 @@ We don't promise these. We build toward them one checked step at a time, and the
 1. **Board recognition.** [DONE] Plug in a device → it names the board, chip, voltage, baud rate, tool
    and language, from an offline USB-ID list (`file-cabinet/filecabinet/data/usb_ids.json`). Ask "what is
    this?" or "how do I program my Pico?"; known boards are named even when not attached.
-2. **Pi "bench" Brain.** The Brain knows your `pibench` profiles and walks a job in plain
-   language: "clip seated? let's probe." Shows the exact command, you approve, it runs, it files
-   what worked.
+2. **Pi "bench" Brain.** [engine DONE] The Brain runs a job's digital steps itself and only pauses
+   for a physical step ("clip the chip, say done") or a plain-language "go" before anything irreversible.
+   It narrates every step and catches a bad read instead of trusting it. The engine
+   (`file-cabinet/filecabinet/jobs.py`) and the Alienware BIOS-dump job
+   (`device-integrator/integrator/hardware_jobs.py`) are built and tested with a simulated flasher.
+   TODO: run the real flasher on the Pi, and wire the guided session into the Brain chat panel.
 3. **Serial console help.** Auto-detect baud; recognize what's answering (MicroPython `>>>`,
    U-Boot, a Linux login, an AT modem, a bootloader) and suggest a next step.
 4. **The Alienware walkthrough** as the first end-to-end real job (once the clip arrives).
