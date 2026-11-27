@@ -176,6 +176,9 @@ We don't promise these. We build toward them one checked step at a time, and the
 3. **Laptop borrows the desktop's bigger model** when reachable.
 4. **Use the other machine's devices** (open a console on a board plugged into the desktop,
    from the laptop).
+5. **Phone client.** [DONE, chat] `mobile/` is an Expo iPhone app (a screen for the Devy server over
+   LAN/Tailscale). It typechecks and bundles; first real-device run is pending. TODO: device list,
+   serial scan and guided jobs in the app.
 
 ### Phase 4 — Programming devices, with approval every time
 1. **Toolchains:** detect what you have; support each language's usual tool (MicroPython,
