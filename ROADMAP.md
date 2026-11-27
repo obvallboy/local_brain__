@@ -194,6 +194,9 @@ decides whether to keep it; it rolls back if anything gets worse; it's shared to
 Tailscale. 8 GB VRAM makes this realistic on the desktop. Biggest and riskiest step — it comes
 after the rest works on your machines.
 
+Three guided jobs exist now (bios-dump, eeprom-read, serial-console) on the shared engine,
+which also takes Python-helper steps (not just shell), so a job can use the serial scanner.
+
 ### Ongoing / polish (fits around the phases)
 The Brain panel is named **Devy** in the UI.
 Streaming answers (word by word); a "that's wrong" button that fixes a fact in place; automatic

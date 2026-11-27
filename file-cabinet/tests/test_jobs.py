@@ -106,3 +106,20 @@ def test_narration_shows_what_it_did():
     turn = s.user("done")
     assert "Checking the chip:" in turn.say and "Reading it twice" in turn.say
     assert turn.ran == ("probe", "read-verify")
+
+
+def test_a_call_step_runs_a_python_helper():
+    from filecabinet.jobs import Job, Kind, RunResult, Session, Step
+    calls = []
+    def helper():
+        calls.append(1)
+        return RunResult(0, "helper ran")
+    job = Job("x", "do a thing", (
+        Step(Kind.PHYSICAL, "wire it up"),
+        Step(Kind.AUTO, "Running a Python step:", call=helper, name="my helper"),
+    ))
+    s = Session(job, FakeRunner())
+    s.start()
+    turn = s.user("done")
+    assert calls == [1] and turn.done
+    assert "helper ran" in turn.say and turn.ran == ("my helper",)

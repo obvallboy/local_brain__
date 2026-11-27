@@ -46,7 +46,9 @@ class Kind(str, Enum):
 class Step:
     kind: Kind
     say: str                                             # plain-language narration / instruction
-    command: Optional[str] = None                        # for AUTO / GATED
+    command: Optional[str] = None                        # for AUTO / GATED: a shell command
+    call: Optional[Callable[[], RunResult]] = None       # or a Python helper returning a RunResult
+    name: Optional[str] = None                           # how a `call` step shows in the "why" list
     check: Optional[Callable[[RunResult], tuple]] = None  # (result) -> (ok: bool, message: str)
     on_fail: str = ""                                    # plain-language recovery advice
     retryable: bool = False                              # fix it physically, then "retry" this step
@@ -137,9 +139,13 @@ class Session:
                 prompt = f"{step.say}\n\nThis can't be undone. Say 'go' to do it, or 'no' to stop."
                 return self._turn(narration, prompt, awaiting="confirm", ran=ran)
 
-            # AUTO, or a GATED step the user just approved: run it.
-            res = self.runner(step.command)
-            ran.append(step.command)
+            # AUTO, or a GATED step the user just approved: run it (a shell command or a Python helper).
+            if step.call is not None:
+                res = step.call()
+                ran.append(step.name or "(internal step)")
+            else:
+                res = self.runner(step.command)
+                ran.append(step.command)
             ok, msg = (step.check or _default_check)(res)
             self.log.append({"step": step.say, "command": step.command, "ok": ok, "detail": msg})
             narration.append(f"{step.say} {msg}".strip())

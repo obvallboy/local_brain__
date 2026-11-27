@@ -266,9 +266,11 @@ device-integrator/
 
 ### Guided jobs (the model does the digital part)
 
-A **guided job** is a hardware task where you do the physical steps and the Brain does the digital
-ones. The first is dumping the Alienware BIOS chip (`integrator/hardware_jobs.py`, built on the pibench
-`aw15r2` profile). The engine (`filecabinet/jobs.py`) runs the safe digital steps itself — probe, read
+A **guided job** is a hardware task where you do the physical steps and Devy does the digital ones.
+There are three so far (`integrator/hardware_jobs.py`, built on the pibench profiles): **`bios-dump`**
+(dump the Alienware's SPI BIOS chip), **`eeprom-read`** (read a 24Cxx I2C EEPROM — where some laptops
+keep the password), and **`serial-console`** (find a board's baud rate and recognize what it's running,
+using the serial scanner). The engine (`filecabinet/jobs.py`) runs the safe digital steps itself — probe, read
 twice, verify, back up — and only stops to ask you for a **physical** action ("clip the chip, say done")
 or a plain-language **"go"** before anything irreversible (writing a chip). It narrates every step, and
 catches a bad read instead of trusting it. Try the walkthrough with a simulated flasher:
