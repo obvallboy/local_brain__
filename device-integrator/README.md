@@ -37,7 +37,7 @@ transmission, no input injection, and no remote control.
   reverse-engineering notes (pinouts, baud rates, decoded bytes). Stored in a
   local JSON file.
 - **Export** a JSON snapshot of everything discovered plus your notes.
-- **Brain** — a local AI panel (the [File Cabinet](../file-cabinet)). Ask "what's plugged in?" or "is my
+- **Devy** — the local AI panel (the [File Cabinet](../file-cabinet)). Ask "what's plugged in?" or "is my
   arduino connected?" and it checks the real device list, including the labels you gave devices in Notes.
   Tell it things ("my brother's name is leo") and it remembers them. Every answer is labelled with where it
   came from (*I know*, *I checked*, *I think*, *I remember*, *I'm not sure*), with a "why?" to expand.
@@ -257,7 +257,8 @@ device-integrator/
 | `POST`   | `/api/serial/<id>/close`   | Close a session                            |
 | `GET`    | `/api/export`              | Download a JSON snapshot + notes           |
 | `GET`    | `/api/brain/status`        | Brain model, meaning-matching, memory file |
-| `POST`   | `/api/brain/ask`           | Ask or tell the Brain `{message}`; slash commands work too |
+| `POST`   | `/api/brain/ask`           | Ask or tell Devy `{message}`; slash commands work too |
+| `GET`    | `/api/brain/serial-scan`   | Find a serial port's baud and recognize what's answering `{port}` |
 | `GET`    | `/api/brain/facts`         | What's filed in drawer 1                   |
 | `DELETE` | `/api/brain/facts/<id>`    | Forget one drawer-1 fact                   |
 | `GET`    | `/api/brain/export`        | Download what the Brain has learned        |
@@ -277,6 +278,13 @@ from integrator.hardware_jobs import SimFlashrom, bios_dump_job
 from filecabinet.jobs import Session
 s = Session(bios_dump_job(), SimFlashrom()); print(s.start().say)
 ```
+
+### Serial console helper
+
+Devy can look at a serial port and tell you its baud rate and what's answering (a MicroPython `>>>`
+prompt, a Linux login, U-Boot, an ESP boot log, a GPS...), with a plain next step. The logic is in
+`filecabinet/serialscan.py` (offline, tested); `integrator/serial_help.scan(port)` runs it on a real
+port with pyserial. `GET /api/brain/serial-scan?port=/dev/ttyUSB0` returns the summary.
 
 ## Tests
 

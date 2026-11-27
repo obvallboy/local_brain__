@@ -195,6 +195,14 @@ def create_app(data_dir: str = DEFAULT_DATA_DIR,
             return jsonify({"error": f"no fact #{fact_id}"}), 404
         return jsonify({"deleted": fact_id})
 
+    @app.get("/api/brain/serial-scan")
+    def api_brain_serial_scan():
+        port = (request.args.get("port") or "").strip()
+        if not port:
+            return jsonify({"error": "port is required"}), 400
+        from integrator.serial_help import scan
+        return jsonify(scan(port))
+
     @app.get("/api/brain/export")
     def api_brain_export():
         resp = jsonify(app.config["ASSISTANT"].export())

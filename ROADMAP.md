@@ -156,8 +156,10 @@ We don't promise these. We build toward them one checked step at a time, and the
    (`file-cabinet/filecabinet/jobs.py`) and the Alienware BIOS-dump job
    (`device-integrator/integrator/hardware_jobs.py`) are built and tested with a simulated flasher.
    TODO: run the real flasher on the Pi, and wire the guided session into the Brain chat panel.
-3. **Serial console help.** Auto-detect baud; recognize what's answering (MicroPython `>>>`,
-   U-Boot, a Linux login, an AT modem, a bootloader) and suggest a next step.
+3. **Serial console help.** [DONE, offline logic] Auto-detect baud; recognize what's answering
+   (MicroPython `>>>`, CircuitPython, U-Boot, a Linux login/shell, an ESP boot log, a GPS, an AT modem)
+   and suggest a next step. `file-cabinet/filecabinet/serialscan.py` + `device-integrator/integrator/serial_help.py`
+   (GET /api/brain/serial-scan). TODO: verify live on a board; add a "scan" button to the console tab.
 4. **The Alienware walkthrough** as the first end-to-end real job (once the clip arrives).
 
 ### Phase 2 — The unified language, first end to end
@@ -190,6 +192,7 @@ Tailscale. 8 GB VRAM makes this realistic on the desktop. Biggest and riskiest s
 after the rest works on your machines.
 
 ### Ongoing / polish (fits around the phases)
+The Brain panel is named **Devy** in the UI.
 Streaming answers (word by word); a "that's wrong" button that fixes a fact in place; automatic
 daily backups of each machine's memory (pull this **early** — it's the only copy per machine);
 approve/reject buttons for core-memory proposals; a people/things view ("what do you know about

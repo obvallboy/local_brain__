@@ -3,7 +3,7 @@
 A local, offline assistant whose memory works like a file cabinet. Built from the
 File Cabinet AI design doc. Everything stays on your machine.
 
-In this repo it is the **Brain** panel of the Device Integrator (`../device-integrator`), where its temp
+In this repo it is **Devy**, the panel of the Device Integrator (`../device-integrator`), where its temp
 drawer can also see the hardware plugged into your computer. It also runs on its own in a terminal.
 
 | Part | What it does |
