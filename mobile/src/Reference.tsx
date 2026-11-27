@@ -2,9 +2,10 @@
 // Look up a board/chip and how to program it, plus a small cheat-sheet.
 
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { search, summaryLine } from './boards';
 import { C } from './theme';
+import { WIRINGS } from './wiringData';
 
 const SERIAL_SIGNS: [string, string][] = [
   ['>>>', 'MicroPython / CircuitPython REPL — type Python at it'],
@@ -28,6 +29,7 @@ const PORTS: [string, string][] = [
 
 export default function Reference() {
   const [q, setQ] = useState('');
+  const [openWire, setOpenWire] = useState<string | null>(null);
   const results = useMemo(() => search(q).slice(0, 12), [q]);
 
   return (
@@ -57,6 +59,33 @@ export default function Reference() {
 
       {q.trim().length === 0 && (
         <>
+          <Text style={styles.section}>Wiring (hardware jobs) — 3.3 V only</Text>
+          {WIRINGS.map((w) => {
+            const open = openWire === w.id;
+            return (
+              <View key={w.id} style={styles.card}>
+                <Pressable onPress={() => setOpenWire(open ? null : w.id)}>
+                  <Text style={styles.wireTitle}>
+                    {open ? '▾ ' : '▸ '}
+                    {w.title}
+                  </Text>
+                </Pressable>
+                {open && (
+                  <View style={styles.wireBody}>
+                    <Text style={styles.note}>{w.note}</Text>
+                    {w.rows.map((r, i) => (
+                      <View key={i} style={styles.wireRow}>
+                        <Text style={styles.wirePin}>{r.chip}</Text>
+                        <Text style={styles.wireSig}>{r.signal}</Text>
+                        <Text style={styles.wirePi}>{r.pi}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+
           <Text style={styles.section}>What's answering on serial?</Text>
           {SERIAL_SIGNS.map(([sign, meaning]) => (
             <View key={sign} style={styles.cheat}>
@@ -105,4 +134,10 @@ const styles = StyleSheet.create({
   cheatKey: { color: C.accent2, fontFamily: 'monospace', fontSize: 13, width: 112 },
   cheatVal: { color: C.text, fontSize: 13, flex: 1, lineHeight: 18 },
   foot: { color: C.muted, fontSize: 12, lineHeight: 18, marginTop: 14 },
+  wireTitle: { color: C.text, fontSize: 14, fontWeight: '600' },
+  wireBody: { marginTop: 8, gap: 2 },
+  wireRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 3, borderTopWidth: 1, borderTopColor: C.border },
+  wirePin: { color: C.accent2, fontFamily: 'monospace', fontSize: 12, width: 44 },
+  wireSig: { color: C.text, fontSize: 12, flex: 1, paddingRight: 6 },
+  wirePi: { color: C.muted, fontSize: 12, flex: 1.2, fontFamily: 'monospace' },
 });

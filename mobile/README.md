@@ -63,7 +63,8 @@ remembered. Then ask Devy anything, or tap a quick button.
   - **Devices** (server) lists what's plugged in, with a serial **Scan** and a server **net-scan**; it also
     has a **Reach a device from this phone (Wi-Fi)** box that opens a device's web page straight from the
     phone, no server.
-  - **Reference** is fully offline: look up any board/chip and how to program it, plus a cheat-sheet.
+  - **Reference** is fully offline: look up any board/chip and how to program it, plus **wiring pin-maps**
+    for the hardware jobs (SOIC-8 BIOS clip, I²C EEPROM, UART → Pi) and a serial/network cheat-sheet.
   - **Bluetooth** scans/connects to nearby BLE devices. This and a **real on-phone model** (in
     Chat → On-phone) need native code, so they run only in a **dev build**, not Expo Go — see
     [DEV_BUILD.md](DEV_BUILD.md). On iOS a physical-device dev build needs a Mac or a paid Apple account.
