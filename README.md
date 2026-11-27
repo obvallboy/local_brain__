@@ -16,6 +16,7 @@ Pi) to do it for real. Own-hardware scope throughout — repair, reuse, learning
 | **`file-cabinet/`** | The local AI behind the Brain panel: a memory organized like a file cabinet, a small local model, honesty labels on every answer. Also runs on its own in a terminal. |
 | **`models/`** | Not committed. The Brain's model files, downloaded with `python brain_setup.py`. |
 | **`brain_setup.py`** | One-time setup per computer: downloads the Brain's models and calibrates them. |
+| **`ROADMAP.md`** | The living plan: the vision, the unified-language design, and the phases ahead. |
 | **`device-bench/`** | The browser **simulator** (snapshot of the live artifact) + runnable engine test suites (`net.js`, `sb8.js`, `cell.js`, `spiflash.js`). Live: <https://claude.ai/artifact/44dTeFdXpHKR7K7jsRbPg7> |
 | **`pibench/`** | Turns a **Raspberry Pi** into a reconfigurable hardware tool via *profiles* (`spi-bios`, `i2c-eeprom`, `uart-console`, `aw15r2`) + the Alienware BIOS-unlock runbook. |
 | **`.github/workflows/`** | CI for all of the above. |
