@@ -15,7 +15,18 @@ import {
 } from 'react-native';
 import { ask, AskResult } from './api';
 import { loadMemory, Memory, respond, saveMemory } from './devyLite';
+import {
+  askModel,
+  downloadModel,
+  loadModel,
+  modelDownloaded,
+  modelReady,
+  modelSupported,
+} from './localModel';
+import { DEV_BUILD_NOTE, inExpoGo } from './native';
 import { C, labelColor } from './theme';
+
+type ModelStatus = 'idle' | 'downloading' | 'loading' | 'ready' | 'error';
 
 const QUICK_SERVER = ["What's plugged in?", 'How do I program my Pico?', '/help'];
 const QUICK_LOCAL = ['How do I program an ESP32?', 'What is a Raspberry Pi Pico?', 'my name is …'];
@@ -31,6 +42,9 @@ export default function Chat({ base }: { base: string }) {
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [mStatus, setMStatus] = useState<ModelStatus>('idle');
+  const [mProg, setMProg] = useState(0);
+  const [mErr, setMErr] = useState<string | null>(null);
   const memRef = useRef<Memory | null>(null);
   const listRef = useRef<FlatList<Msg>>(null);
 
@@ -39,6 +53,27 @@ export default function Chat({ base }: { base: string }) {
       memRef.current = m;
     });
   }, []);
+
+  const enableModel = async () => {
+    setMErr(null);
+    if (!modelSupported()) {
+      setMStatus('error');
+      setMErr(DEV_BUILD_NOTE);
+      return;
+    }
+    try {
+      if (!(await modelDownloaded())) {
+        setMStatus('downloading');
+        await downloadModel(setMProg);
+      }
+      setMStatus('loading');
+      await loadModel();
+      setMStatus('ready');
+    } catch (e) {
+      setMStatus('error');
+      setMErr(e instanceof Error ? e.message : String(e));
+    }
+  };
 
   const send = async (text: string) => {
     const message = text.trim();
@@ -51,6 +86,22 @@ export default function Chat({ base }: { base: string }) {
       const { answer, mem: next } = respond(message, mem);
       memRef.current = next;
       saveMemory(next);
+      // If the rules don't know, and the on-phone model is loaded, let it try.
+      if (answer.label === "I'm not sure" && modelReady()) {
+        setSending(true);
+        try {
+          const t = await askModel(message);
+          if (t) {
+            setMessages((m) => [...m, { id: nextId(), role: 'devy', text: t, result: { label: 'I think', text: t } }]);
+            setSending(false);
+            setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+            return;
+          }
+        } catch {
+          // fall through to the rules answer
+        }
+        setSending(false);
+      }
       setMessages((m) => [...m, { id: nextId(), role: 'devy', text: answer.text, result: { label: answer.label, text: answer.text } }]);
       setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
       return;
@@ -143,7 +194,25 @@ export default function Chat({ base }: { base: string }) {
         ))}
       </View>
       {mode === 'local' && (
-        <Text style={styles.banner}>Running on your phone — no server, no big model. Remembers facts and knows boards.</Text>
+        <View style={styles.localBar}>
+          <Text style={styles.banner}>
+            Running on your phone — no server. Remembers facts and knows boards.
+          </Text>
+          {inExpoGo ? (
+            <Text style={styles.modelNote}>A real on-phone model needs the dev build (see mobile/DEV_BUILD.md).</Text>
+          ) : mStatus === 'ready' ? (
+            <Text style={[styles.modelNote, { color: C.ok }]}>On-phone model loaded — it answers general questions too.</Text>
+          ) : mStatus === 'downloading' ? (
+            <Text style={styles.modelNote}>Downloading model… {Math.round(mProg * 100)}%</Text>
+          ) : mStatus === 'loading' ? (
+            <Text style={styles.modelNote}>Loading model…</Text>
+          ) : (
+            <Pressable onPress={enableModel}>
+              <Text style={styles.modelLink}>+ Enable a real on-phone model (one-time ~400 MB download)</Text>
+            </Pressable>
+          )}
+          {mErr && <Text style={[styles.modelNote, { color: C.err }]}>{mErr}</Text>}
+        </View>
       )}
 
       <FlatList
@@ -199,7 +268,10 @@ const styles = StyleSheet.create({
   modeActive: { backgroundColor: C.accent, borderColor: 'transparent' },
   modeText: { color: C.muted, fontSize: 13, fontWeight: '600' },
   modeTextActive: { color: '#042' },
-  banner: { color: C.ok, fontSize: 12, textAlign: 'center', paddingHorizontal: 12, paddingBottom: 4 },
+  localBar: { paddingHorizontal: 12, paddingBottom: 6, gap: 2 },
+  banner: { color: C.ok, fontSize: 12, textAlign: 'center' },
+  modelNote: { color: C.muted, fontSize: 12, textAlign: 'center' },
+  modelLink: { color: C.accent, fontSize: 12, textAlign: 'center' },
   listContent: { padding: 12, gap: 10, flexGrow: 1 },
   empty: { color: C.muted, fontSize: 14, lineHeight: 21, padding: 16, textAlign: 'center' },
   bubble: { maxWidth: '92%', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: C.border },

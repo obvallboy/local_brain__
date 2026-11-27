@@ -64,3 +64,6 @@ remembered. Then ask Devy anything, or tap a quick button.
     has a **Reach a device from this phone (Wi-Fi)** box that opens a device's web page straight from the
     phone, no server.
   - **Reference** is fully offline: look up any board/chip and how to program it, plus a cheat-sheet.
+  - **Bluetooth** scans/connects to nearby BLE devices. This and a **real on-phone model** (in
+    Chat → On-phone) need native code, so they run only in a **dev build**, not Expo Go — see
+    [DEV_BUILD.md](DEV_BUILD.md). On iOS a physical-device dev build needs a Mac or a paid Apple account.

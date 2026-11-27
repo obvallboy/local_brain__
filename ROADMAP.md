@@ -177,7 +177,7 @@ We don't promise these. We build toward them one checked step at a time, and the
 4. **Use the other machine's devices** (open a console on a board plugged into the desktop,
    from the laptop).
 5. **Phone client.** [DONE, chat] `mobile/` is an Expo iPhone app (a screen for the Devy server over
-   LAN/Tailscale). It typechecks and bundles; first real-device run is pending. Chat (Server + an on-phone Devy Lite that remembers facts and knows boards offline), Devices (serial/network scan + a phone-only Wi-Fi reach), and an offline Reference tab are in; guided jobs in the app are next.
+   LAN/Tailscale). It typechecks and bundles; first real-device run is pending. Expo Go app: Chat (Server + on-phone Devy Lite), Devices (serial/network scan + phone Wi-Fi reach), Reference (offline). A dev build (mobile/DEV_BUILD.md) adds Bluetooth (BLE) and a real on-phone model (llama.rn) — guarded so Expo Go still runs. iOS dev build on a physical phone needs a Mac or a paid Apple account. Guided jobs in the app are next.
 
 ### Phase 4 — Programming devices, with approval every time
 1. **Toolchains:** detect what you have; support each language's usual tool (MicroPython,

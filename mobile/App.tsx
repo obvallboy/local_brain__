@@ -9,12 +9,13 @@ import { Platform, Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } 
 import { getStatus, normalizeBase, Status } from './src/api';
 import Chat from './src/Chat';
 import Devices from './src/Devices';
+import Bluetooth from './src/Bluetooth';
 import Reference from './src/Reference';
 import { C } from './src/theme';
 
 const URL_KEY = 'devy.serverUrl';
 const DEFAULT_URL = 'http://192.168.1.100:5000';
-type Tab = 'chat' | 'devices' | 'reference';
+type Tab = 'chat' | 'devices' | 'bluetooth' | 'reference';
 
 export default function App() {
   const [serverUrl, setServerUrl] = useState(DEFAULT_URL);
@@ -124,16 +125,24 @@ export default function App() {
       )}
 
       <View style={styles.tabs}>
-        {(['chat', 'devices', 'reference'] as Tab[]).map((t) => (
+        {(['chat', 'devices', 'bluetooth', 'reference'] as Tab[]).map((t) => (
           <Pressable key={t} style={[styles.tab, tab === t && styles.tabActive]} onPress={() => setTab(t)}>
             <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'chat' ? 'Chat' : t === 'devices' ? 'Devices' : 'Reference'}
+              {t === 'chat' ? 'Chat' : t === 'devices' ? 'Devices' : t === 'bluetooth' ? 'Bluetooth' : 'Reference'}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      {tab === 'chat' ? <Chat base={base} /> : tab === 'devices' ? <Devices base={base} /> : <Reference />}
+      {tab === 'chat' ? (
+        <Chat base={base} />
+      ) : tab === 'devices' ? (
+        <Devices base={base} />
+      ) : tab === 'bluetooth' ? (
+        <Bluetooth />
+      ) : (
+        <Reference />
+      )}
     </SafeAreaView>
   );
 }
@@ -172,7 +181,7 @@ const styles = StyleSheet.create({
   tabs: { flexDirection: 'row', backgroundColor: C.panel, borderBottomWidth: 1, borderBottomColor: C.border },
   tab: { flex: 1, paddingVertical: 11, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   tabActive: { borderBottomColor: C.accent },
-  tabText: { color: C.muted, fontSize: 14, fontWeight: '600' },
+  tabText: { color: C.muted, fontSize: 13, fontWeight: '600' },
   tabTextActive: { color: C.text },
   btn: { borderWidth: 1, borderColor: C.border, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: C.panel2 },
   btnText: { color: C.text, fontSize: 14 },
