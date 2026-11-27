@@ -98,3 +98,30 @@ export type NetScanResult = {
 export function netScan(base: string, host: string): Promise<NetScanResult> {
   return req<NetScanResult>(base, `/api/brain/net-scan?host=${encodeURIComponent(host)}`, undefined, 25000);
 }
+
+export type PhoneProbe = { reachable: boolean; info: string };
+
+// Reach a device over Wi-Fi straight from the phone (no server). HTTP only — the phone
+// can't do a raw port scan, but it can open a device's web server.
+export async function phoneHttpProbe(host: string): Promise<PhoneProbe> {
+  const h = host.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+  for (const url of [`http://${h}`, `http://${h}:8080`]) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 5000);
+      const res = await fetch(url, { method: 'GET', signal: ctrl.signal });
+      clearTimeout(timer);
+      const server = res.headers.get('server');
+      return {
+        reachable: true,
+        info: `${url} answered (HTTP ${res.status}${server ? `, Server: ${server}` : ''}). Open it in a browser.`,
+      };
+    } catch {
+      // try the next url
+    }
+  }
+  return {
+    reachable: false,
+    info: `Couldn't reach ${h} over HTTP from this phone. It may use HTTPS, a different port, or have no web server. A full port scan (SSH, MQTT, ESP OTA…) needs the Devy server's net-scan above.`,
+  };
+}

@@ -12,11 +12,21 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { DeviceSnapshot, getDevices, netScan, NetScanResult, ScanResult, serialScan } from './api';
+import {
+  DeviceSnapshot,
+  getDevices,
+  netScan,
+  NetScanResult,
+  phoneHttpProbe,
+  PhoneProbe,
+  ScanResult,
+  serialScan,
+} from './api';
 import { C } from './theme';
 
 type Scan = { loading: boolean; result?: ScanResult; error?: string };
 type Net = { loading: boolean; result?: NetScanResult; error?: string };
+type Phone = { loading: boolean; result?: PhoneProbe; error?: string };
 
 export default function Devices({ base }: { base: string }) {
   const [snap, setSnap] = useState<DeviceSnapshot | null>(null);
@@ -25,6 +35,8 @@ export default function Devices({ base }: { base: string }) {
   const [scans, setScans] = useState<Record<string, Scan>>({});
   const [netHost, setNetHost] = useState('');
   const [net, setNet] = useState<Net | null>(null);
+  const [phoneHost, setPhoneHost] = useState('');
+  const [phone, setPhone] = useState<Phone | null>(null);
 
   const scanNet = async () => {
     const host = netHost.trim();
@@ -34,6 +46,17 @@ export default function Devices({ base }: { base: string }) {
       setNet({ loading: false, result: await netScan(base, host) });
     } catch (e) {
       setNet({ loading: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  };
+
+  const reachFromPhone = async () => {
+    const host = phoneHost.trim();
+    if (!host) return;
+    setPhone({ loading: true });
+    try {
+      setPhone({ loading: false, result: await phoneHttpProbe(host) });
+    } catch (e) {
+      setPhone({ loading: false, error: e instanceof Error ? e.message : String(e) });
     }
   };
 
@@ -83,7 +106,30 @@ export default function Devices({ base }: { base: string }) {
       )}
       {!error && !snap && <ActivityIndicator color={C.muted} style={{ marginTop: 24 }} />}
 
-      <Text style={styles.section}>Scan a device on your network</Text>
+      <Text style={styles.section}>Reach a device from this phone (Wi-Fi)</Text>
+      <View style={styles.card}>
+        <View style={styles.row}>
+          <TextInput
+            style={styles.netInput}
+            value={phoneHost}
+            onChangeText={setPhoneHost}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="numbers-and-punctuation"
+            placeholder="192.168.1.50 — open its web page, no server"
+            placeholderTextColor={C.muted}
+            onSubmitEditing={reachFromPhone}
+            returnKeyType="search"
+          />
+          <Pressable style={[styles.btn, phone?.loading && styles.btnDisabled]} onPress={reachFromPhone} disabled={phone?.loading}>
+            {phone?.loading ? <ActivityIndicator color={C.text} /> : <Text style={styles.btnText}>Reach</Text>}
+          </Pressable>
+        </View>
+        {phone?.result && <Text style={styles.scan}>{phone.result.info}</Text>}
+        {phone?.error && <Text style={[styles.scan, { color: C.err }]}>{phone.error}</Text>}
+      </View>
+
+      <Text style={styles.section}>Scan a device on your network (via the server)</Text>
       <View style={styles.card}>
         <View style={styles.row}>
           <TextInput
@@ -93,7 +139,7 @@ export default function Devices({ base }: { base: string }) {
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="numbers-and-punctuation"
-            placeholder="192.168.1.50 (an ESP32, router, camera…)"
+            placeholder="192.168.1.50 — full port scan (SSH, MQTT, ESP OTA…)"
             placeholderTextColor={C.muted}
             onSubmitEditing={scanNet}
             returnKeyType="search"
