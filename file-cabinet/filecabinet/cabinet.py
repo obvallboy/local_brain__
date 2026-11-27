@@ -10,7 +10,8 @@ from pathlib import Path
 
 from .answer import Answer, Label, Route
 from .core import DEFAULT_VALUES, Core
-from .devices import build as build_devices, find as find_devices, query_terms, summarize
+from .boards import identify as identify_board
+from .devices import build as build_devices, find as find_devices, query_terms, summarize, wants_help
 from .filing import FileItem, file_items, match_cases
 from .frontdesk import CRISIS, DEEP, FORGET, FrontDesk, normalize, strip_filler
 from .model import Model, NoModel
@@ -323,12 +324,23 @@ class FileCabinet:
         except Exception as exc:  # discovery problems are reported, never guessed around
             return Answer(Label.NOT_SURE, f"I tried to check the devices, but it failed: {exc}", route, opened)
         evidence = tuple(f"saw: {d.kind} {d.name} ({d.where})" for d in items if d.kind in ("serial", "usb") and not d.noise)
+        help_asked = wants_help(text)
         terms = query_terms(text)
         if terms:
             found = find_devices(items, terms, self.matcher)
             if found:
-                listed = "; ".join(f"{d.name} ({d.kind}, {d.where})" for d in found[:4])
+                if help_asked:
+                    # "what is this / how do I program it" — identify and explain, from the real device.
+                    lines = [f"{d.name} on {d.where}: {d.info.describe()}" if d.info
+                             else f"{d.name} on {d.where} — I don't recognize this one from its USB id."
+                             for d in found[:2]]
+                    return Answer(Label.CHECKED, "I checked. " + " ".join(lines), route, opened, evidence)
+                listed = "; ".join(d.listed() for d in found[:4])
                 return Answer(Label.CHECKED, f"I checked: yes, I can see {listed}.", route, opened, evidence)
+            # Nothing attached matches. If they asked about a known board, answer from what I know about it.
+            if help_asked and (known := identify_board(product=text)):
+                return Answer(Label.KNOW, f"Nothing like that is plugged in right now, but here's what I know: {known.summary_line()}.",
+                              route, ("drawer2",), (f"board registry: {known.name} ({known.confidence} match)",))
             asked = " ".join(sorted(terms))
             words = f"I checked, and I don't see anything matching \"{asked}\" right now. Attached: {summarize(items)}."
             return Answer(Label.CHECKED, words, route, opened, evidence)

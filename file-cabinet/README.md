@@ -12,7 +12,7 @@ drawer can also see the hardware plugged into your computer. It also runs on its
 | Drawer 1 | Facts and opinions you teach it. Answers labelled **I know** |
 | Drawer 2 | Patterns: the local model and filed references. Answers labelled **I think** |
 | Drawer 3 | Protected core values and core memories. Changes need your approval |
-| Temp drawer | Real checks on the task at hand: network checks, and (inside the Device Integrator) the devices plugged in right now. Answers labelled **I checked** |
+| Temp drawer | Real checks on the task at hand: network checks, and (inside the Device Integrator) the devices plugged in right now — recognized by their USB id (board, chip, voltage, how to program). Answers labelled **I checked** |
 | Episode log | What happened, for recall by cue. **I remember** or **I don't remember** |
 
 ## Rules it follows

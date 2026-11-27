@@ -42,7 +42,10 @@ transmission, no input injection, and no remote control.
   Tell it things ("my brother's name is leo") and it remembers them. Every answer is labelled with where it
   came from (*I know*, *I checked*, *I think*, *I remember*, *I'm not sure*), with a "why?" to expand.
   **📁 Drawer 1** shows everything it has filed about you, with a ✕ to delete anything wrong (or just say
-  "forget my locker code"). The model runs on your machine; nothing is sent anywhere.
+  "forget my locker code"). It also **recognizes dev boards**: plug one in and ask "what is this?" or
+  "how do I program my Pico?" and it names the board, chip, voltage, baud rate and the tools and languages
+  to use — from an offline USB-id list, so it works with no internet. The model runs on your machine; nothing
+  is sent anywhere.
 
 ## Install & run
 

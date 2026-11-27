@@ -147,8 +147,9 @@ We don't promise these. We build toward them one checked step at a time, and the
 - *Build now:* the CachyOS/Windows setup checks and scripts. *Run later:* on your machines.
 
 ### Phase 1 — The hardware Brain (core goal; fully testable here with simulated devices)
-1. **Board recognition.** Plug in a device → it names the board, chip, voltage, baud rate, tool
-   and language, from an offline USB-ID list. Feeds drawer-2 knowledge.
+1. **Board recognition.** [DONE] Plug in a device → it names the board, chip, voltage, baud rate, tool
+   and language, from an offline USB-ID list (`file-cabinet/filecabinet/data/usb_ids.json`). Ask "what is
+   this?" or "how do I program my Pico?"; known boards are named even when not attached.
 2. **Pi "bench" Brain.** The Brain knows your `pibench` profiles and walks a job in plain
    language: "clip seated? let's probe." Shows the exact command, you approve, it runs, it files
    what worked.

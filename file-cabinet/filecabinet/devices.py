@@ -10,6 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from .boards import BoardInfo, identify
 from .similarity import Matcher, tokens
 
 _EXPLICIT = re.compile(
@@ -30,10 +31,34 @@ _PRESENCE = re.compile(
 )
 
 
+# "what is this?", "what board is this?", "what's on COM3?" — needs a this/that/it or a port,
+# so "what is a dev board?" (general) does not count.
+_IDENTIFY = re.compile(
+    r"\b(what('s| is| kind of)?|which|identify)\b.{0,20}\b(this|that|it)\b"
+    r"|\bwhat('s| is)?\b.{0,20}\bon (com ?\d+|/dev/\w+|port \w+)\b",
+    re.I,
+)
+_PROGRAM = re.compile(
+    r"\b(how (do|can|would) i|how to)\b.{0,30}\b(program|flash|upload|code|talk to|connect to|use|drive)\b|"
+    r"\bwhat (language|tool|baud)\b|\bwhat can i do with\b",
+    re.I,
+)
+
+
 def is_device_question(text: str) -> bool:
-    """About what is attached right now: "what's plugged in?", "is my arduino connected?".
-    A hardware word alone ("how do usb drives work?") is a general question, not a check."""
-    return bool(_EXPLICIT.search(text) or (_HARDWARE.search(text) and _PRESENCE.search(text)))
+    """About the hardware here: "what's plugged in?", "is my arduino connected?",
+    "what is this?", "how do I program my pico?". A hardware word alone
+    ("how do usb drives work?") is a general question, not a device question."""
+    if _EXPLICIT.search(text) or (_HARDWARE.search(text) and _PRESENCE.search(text)):
+        return True
+    if _IDENTIFY.search(text) and (_HARDWARE.search(text) or re.search(r"\b(this|that|it|plugged)\b", text, re.I)):
+        return True
+    return bool(_PROGRAM.search(text) and _HARDWARE.search(text))
+
+
+def wants_help(text: str) -> bool:
+    """True for "what is this / how do I program it", as opposed to "is it connected"."""
+    return bool(_IDENTIFY.search(text) or _PROGRAM.search(text))
 
 
 # Words about the act of checking, not about which device.
@@ -51,6 +76,13 @@ class Device:
     where: str  # port, bus address, mount point or address
     text: str   # everything searchable about it
     noise: bool = False  # hubs and the like: searchable, left out of summaries
+    info: BoardInfo | None = None  # what the USB id says it is, if recognized
+
+    def listed(self) -> str:
+        """Name + where, plus what it is when recognized."""
+        head = (f"{self.name} ({self.kind}, {self.where})" if self.where and self.where != self.name
+                else f"{self.name} ({self.kind})")
+        return f"{head} — {self.info.summary_line()}" if self.info else head
 
 
 def _clean(value):
@@ -70,18 +102,21 @@ def build(snapshot: dict, labels: dict | None = None) -> list[Device]:
         note = labels.get(key) or {}
         name = note.get("label") or _clean(d.get("description")) or _clean(d.get("product")) or d.get("device") or "serial port"
         vidpid = f"{d.get('vid')}:{d.get('pid')}" if d.get("vid") else ""
+        info = identify(d.get("vid"), d.get("pid"), _clean(d.get("description")) or _clean(d.get("product")))
         out.append(Device("serial", name, d.get("device") or "", _join(
             note.get("label"), note.get("note"), d.get("description"), d.get("manufacturer"),
-            d.get("product"), d.get("device"), vidpid)))
+            d.get("product"), d.get("device"), vidpid, info.name if info else None), info=info))
     for d in snapshot.get("usb") or []:
         key = d.get("key") or f"usb:{d.get('vid')}:{d.get('pid')}"
         note = labels.get(key) or {}
         name = note.get("label") or d.get("product") or d.get("manufacturer") or f"{d.get('vid')}:{d.get('pid')}"
         where = f"USB bus {d.get('bus')}, address {d.get('address')}" if d.get("bus") else f"USB {d.get('vid')}:{d.get('pid')}"
         noise = (d.get("device_class_name") or "").lower() == "hub" or "hub" in (d.get("product") or "").lower()
+        info = identify(d.get("vid"), d.get("pid"), _clean(d.get("product")))
         out.append(Device("usb", name, where, _join(
             note.get("label"), note.get("note"), d.get("product"), d.get("manufacturer"),
-            d.get("device_class_name"), f"{d.get('vid')}:{d.get('pid')}", d.get("serial_number")), noise))
+            d.get("device_class_name"), f"{d.get('vid')}:{d.get('pid')}", d.get("serial_number"),
+            info.name if info else None), noise, info=info))
     for d in snapshot.get("storage") or []:
         out.append(Device("storage", d.get("device") or "disk", d.get("mountpoint") or "",
                           _join(d.get("device"), d.get("mountpoint"), d.get("fstype"))))
@@ -105,7 +140,9 @@ def summarize(devices: list[Device], names_per_group: int = 4) -> str:
             continue
         label = one if len(group) == 1 else many
         if kind in ("serial", "usb"):
-            shown = [f"{d.name} on {d.where}" if kind == "serial" and d.where and d.where != d.name else d.name
+            # Name recognized boards by what they actually are.
+            display = lambda d: d.info.name if d.info and not d.info.is_bridge else d.name  # noqa: E731
+            shown = [f"{display(d)} on {d.where}" if kind == "serial" and d.where and d.where != display(d) else display(d)
                      for d in group[:names_per_group]]
             more = f", +{len(group) - names_per_group} more" if len(group) > names_per_group else ""
             parts.append(f"{len(group)} {label} ({', '.join(shown)}{more})")
