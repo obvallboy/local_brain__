@@ -91,7 +91,9 @@ def run_binwalk(path: str, timeout: float = 120.0) -> Optional[List[str]]:
     except (subprocess.TimeoutExpired, OSError) as exc:
         return [f"(binwalk didn't finish: {exc})"]
     lines = [ln.rstrip() for ln in (p.stdout or "").splitlines() if ln.strip()]
-    return [ln for ln in lines if not set(ln) <= set("-= ")][:60]
+    # Drop table rules and binwalk 3's closing "Analyzed N file..." summary; keep the findings.
+    return [ln for ln in lines if not set(ln) <= set("-= ") and not ln.lstrip().startswith("Analyzed ")
+            and ln.strip() != path][:60]                                  # nor the file-path header
 
 
 def check(path: str, binwalk: BinwalkRunner = run_binwalk, expected_size: Optional[int] = None) -> DumpReport:
