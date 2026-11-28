@@ -27,6 +27,7 @@
     </div>
     <div class="topbar-actions">
       <button id="brain-toggle" class="btn primary">🧠 Ask Devy</button>
+      <button id="tools-toggle" class="btn" title="Check a chip dump · run MicroPython on a board">🧰 <span class="btn-label">Tools</span></button>
       <button id="refresh" class="btn" title="Scan again">↻ <span class="btn-label">Refresh</span></button>
       <a id="export" class="btn ghost" href="/api/export" title="Download the full scan as raw JSON">⇩ <span class="btn-label">Export</span></a>
     </div>
@@ -145,6 +146,54 @@
       <label class="btn small" title="Merge in a memory file from your other computer">⇧ Import memory
         <input id="brain-import" type="file" accept="application/json,.json" hidden /></label>
       <span id="brain-foot-status" class="muted"></span>
+    </div>
+  </aside>
+
+  <!-- Tools: chip-dump check and MicroPython runner -->
+  <aside id="tools" class="brain tools hidden" aria-label="Tools">
+    <div class="brain-head">
+      <div>
+        <h2>🧰 Tools</h2>
+        <p id="tools-status" class="muted">checking what's installed…</p>
+      </div>
+      <button id="tools-close" class="btn small" title="Close">✕</button>
+    </div>
+    <div class="tools-body">
+      <section class="tool-card">
+        <h3>🔎 Check a chip dump</h3>
+        <p class="muted">Is a BIOS or EEPROM read real data, or a blank, mirrored read from a clip that
+        wasn't touching? Pick the <code>.bin</code> file. It's only read, never changed.</p>
+        <form id="dump-form" class="tool-row">
+          <input id="dump-file" type="file" accept=".bin,.rom,.img,.fd,application/octet-stream" />
+          <button class="btn primary" id="dump-go">Check</button>
+        </form>
+        <div id="dump-result"></div>
+      </section>
+
+      <section class="tool-card">
+        <h3>🐍 Run MicroPython on a board</h3>
+        <p class="muted">Plug in a Pico or ESP32 running MicroPython. The code runs in the board's memory only,
+        nothing is saved to it, and only after you approve it.</p>
+        <div class="tool-row">
+          <select id="mp-port"><option value="">looking for boards…</option></select>
+          <button class="btn small" id="mp-refresh" type="button" title="Look again">↻</button>
+        </div>
+        <textarea id="mp-code" rows="7" spellcheck="false">import sys
+print("Hello from", sys.platform, sys.implementation.name, sys.version)</textarea>
+        <div class="tool-row">
+          <button class="btn primary" id="mp-review" type="button">Review &amp; run…</button>
+        </div>
+        <div id="mp-plan" class="plan hidden">
+          <p class="plan-title">This will run, once:</p>
+          <pre id="mp-plan-cmd" class="plan-cmd"></pre>
+          <pre id="mp-plan-code" class="plan-code"></pre>
+          <div class="tool-row">
+            <button class="btn primary" id="mp-approve" type="button">✓ Approve and run on the board</button>
+            <button class="btn ghost" id="mp-cancel" type="button">Cancel</button>
+          </div>
+        </div>
+        <div id="mp-result"></div>
+      </section>
     </div>
   </aside>
 

@@ -52,6 +52,7 @@ class Step:
     check: Optional[Callable[[RunResult], tuple]] = None  # (result) -> (ok: bool, message: str)
     on_fail: str = ""                                    # plain-language recovery advice
     retryable: bool = False                              # fix it physically, then "retry" this step
+    retry_back: int = 0                                  # on retry, first go back this many steps (re-read, then re-check)
 
 
 @dataclass(frozen=True)
@@ -119,7 +120,8 @@ class Session:
             return Turn("Say 'go' to do it, or 'no' to stop.", awaiting="confirm")
         if self.awaiting == "retry":
             if t in RETRY_WORDS:
-                return self._advance()  # re-run the same step
+                self.i = max(0, self.i - self.job.steps[self.i].retry_back)
+                return self._advance()  # re-run the step (or the steps it depends on)
             return Turn("Fix it and say 'retry', or 'stop' to stop.", awaiting="retry")
         return self._advance()
 

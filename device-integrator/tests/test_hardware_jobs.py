@@ -4,10 +4,16 @@ from integrator.assistant import import_filecabinet
 from integrator.hardware_jobs import SimFlashrom, bios_dump_job
 
 
-def session(sim):
+def real_dump(image):
+    """The simulated flasher writes no file, so stand in for a dump check that passes."""
+    from filecabinet.jobs import RunResult
+    return RunResult(0, "This looks like a real BIOS/UEFI image.")
+
+
+def session(sim, checker=real_dump):
     import_filecabinet()
     from filecabinet.jobs import Session
-    return Session(bios_dump_job(), sim)
+    return Session(bios_dump_job(checker=checker), sim)
 
 
 def test_happy_path_does_the_digital_work_and_never_writes():

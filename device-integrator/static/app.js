@@ -427,13 +427,14 @@ loadDevices();
 
 // ---- Brain (File Cabinet AI) -------------------------------------------------
 const LABEL_CLASS = {
-  "I know": "lb-know", "Filed": "lb-filed", "I think": "lb-think", "I checked": "lb-checked",
+  "I know": "lb-know", "I ran it": "lb-know", "Filed": "lb-filed", "I think": "lb-think", "I checked": "lb-checked",
   "I remember": "lb-remember", "From my core": "lb-core",
   "I don't remember": "lb-unsure", "I'm not sure": "lb-unsure", "Command": "lb-cmd", "Removed": "lb-removed",
 };
 let brainStatusTimer = null;
 
 function brainOpen(open) {
+  if (open) $("#tools").classList.add("hidden");
   $("#brain").classList.toggle("hidden", !open);
   if (open) { refreshBrainStatus(); $("#brain-input").focus(); }
 }
@@ -542,4 +543,103 @@ $("#brain-facts-toggle").addEventListener("click", () => {
   const box = $("#brain-facts");
   box.classList.toggle("hidden");
   if (!box.classList.contains("hidden")) loadFacts();
+});
+
+// ---- Tools: chip-dump check + MicroPython runner ---------------------------------
+function toolsOpen(open) {
+  if (open) $("#brain").classList.add("hidden");
+  $("#tools").classList.toggle("hidden", !open);
+  if (open) { loadToolStatus(); loadBoards(); }
+}
+$("#tools-toggle").addEventListener("click", () => toolsOpen($("#tools").classList.contains("hidden")));
+$("#tools-close").addEventListener("click", () => toolsOpen(false));
+
+async function loadToolStatus() {
+  try {
+    const t = await api("/api/tools");
+    $("#tools-status").textContent = [
+      t.mpremote.installed ? `mpremote ${(t.mpremote.version || "").replace(/^mpremote\s*/, "")} ✓` : "mpremote missing",
+      t.binwalk.installed ? "binwalk ✓" : "binwalk not installed (built-in checks only)",
+    ].join(" · ");
+    $("#tools-status").title = t.binwalk.installed ? "" : `For deeper dump scans: ${t.binwalk.hint}`;
+  } catch (e) { $("#tools-status").textContent = e.message; }
+}
+
+// Chip dump check
+$("#dump-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  const file = $("#dump-file").files[0];
+  const out = $("#dump-result");
+  if (!file) { out.innerHTML = '<p class="result muted">Pick a dump file first.</p>'; return; }
+  out.innerHTML = `<p class="result muted">Checking ${file.name}…</p>`;
+  const form = new FormData();
+  form.append("file", file);
+  try {
+    const r = await api("/api/tools/dump-check", { method: "POST", body: form });
+    const label = { bios: "Real BIOS image", data: "Real data", blank: "Blank read", mirrored: "Mirrored read",
+                    empty: "Empty file", unreadable: "Unreadable" }[r.verdict] || r.verdict;
+    const box = el("div", { class: "result" },
+      el("span", { class: "verdict " + (r.ok ? "good" : "bad") }, label),
+      el("div", {}, el("span", { class: "lb lb-checked" }, "I checked"), r.say),
+      el("ul", { class: "facts" }, ...r.facts.map((f) => el("li", {}, f))));
+    if (r.binwalk && r.binwalk.length)
+      box.append(el("details", {}, el("summary", {}, `binwalk found ${r.binwalk.length} lines`),
+        el("pre", { class: "tool-out" }, r.binwalk.join("\n"))));
+    out.replaceChildren(box);
+  } catch (e) { out.innerHTML = `<p class="result err">${e.message}</p>`; }
+});
+
+// MicroPython runner: review first, run only the reviewed plan
+let mpPlan = null;
+async function loadBoards() {
+  const sel = $("#mp-port");
+  try {
+    const r = await api("/api/tools/micropython/boards");
+    sel.innerHTML = "";
+    if (!r.status.installed) { sel.append(el("option", { value: "" }, "mpremote isn't installed")); return; }
+    if (!r.boards.length) { sel.append(el("option", { value: "" }, "no USB boards found: plug one in, then ↻")); return; }
+    for (const b of r.boards)
+      sel.append(el("option", { value: b.port },
+        `${b.port} · ${b.board || b.product || b.manufacturer || b.vid + ":" + b.pid}`));
+  } catch (e) { sel.innerHTML = ""; sel.append(el("option", { value: "" }, e.message)); }
+}
+$("#mp-refresh").addEventListener("click", loadBoards);
+
+function hidePlan() { mpPlan = null; $("#mp-plan").classList.add("hidden"); }
+$("#mp-code").addEventListener("input", hidePlan);   // changed code needs a fresh review
+$("#mp-port").addEventListener("change", hidePlan);
+$("#mp-cancel").addEventListener("click", hidePlan);
+
+$("#mp-review").addEventListener("click", async () => {
+  const out = $("#mp-result");
+  out.innerHTML = "";
+  try {
+    mpPlan = await api("/api/tools/micropython/plan", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ port: $("#mp-port").value, code: $("#mp-code").value }),
+    });
+    $("#mp-plan-cmd").textContent = mpPlan.command;
+    $("#mp-plan-code").textContent = mpPlan.code;
+    $("#mp-plan").classList.remove("hidden");
+  } catch (e) { hidePlan(); out.innerHTML = `<p class="result err">${e.message}</p>`; }
+});
+
+$("#mp-approve").addEventListener("click", async () => {
+  if (!mpPlan) return;
+  const token = mpPlan.token;
+  hidePlan();
+  const out = $("#mp-result");
+  out.innerHTML = '<p class="result muted">Running on the board…</p>';
+  try {
+    const r = await api("/api/tools/micropython/run", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token }),
+    });
+    const box = el("div", { class: "result" },
+      el("span", { class: "verdict " + (r.ok ? "good" : "bad") }, r.ok ? "Ran OK" : r.timed_out ? "Stopped" : "Failed"),
+      el("div", {}, el("span", { class: "lb " + (LABEL_CLASS[r.label] || "lb-cmd") }, r.label), r.say));
+    const text = [r.stdout, r.stderr].filter(Boolean).join("\n").trim();
+    if (text) box.append(el("pre", { class: "tool-out" }, text));
+    if (r.seconds != null) box.append(el("p", { class: "muted" }, `${r.command} · ${r.seconds} s`));
+    out.replaceChildren(box);
+  } catch (e) { out.innerHTML = `<p class="result err">${e.message}</p>`; }
 });

@@ -156,6 +156,10 @@ We don't promise these. We build toward them one checked step at a time, and the
    (`file-cabinet/filecabinet/jobs.py`) and the Alienware BIOS-dump job
    (`device-integrator/integrator/hardware_jobs.py`) are built and tested with a simulated flasher.
    TODO: run the real flasher on the Pi, and wire the guided session into the Brain chat panel.
+   [DONE] **Dump check** (`integrator/dump_check.py`): after the double read, the job looks inside the dump
+   and refuses a blank (all 0xFF/0x00) or mirrored read, even when both reads match. It names BIOS markers
+   (Intel flash descriptor, UEFI volumes, variable store) and adds binwalk's scan when installed. Also in the
+   Tools panel → "Check a chip dump".
 3. **Serial console help.** [DONE, offline logic] Auto-detect baud; recognize what's answering
    (MicroPython `>>>`, CircuitPython, U-Boot, a Linux login/shell, an ESP boot log, a GPS, an AT modem)
    and suggest a next step. `file-cabinet/filecabinet/serialscan.py` + `device-integrator/integrator/serial_help.py`
@@ -166,7 +170,10 @@ We don't promise these. We build toward them one checked step at a time, and the
 1. **Seed the language registry** from the List of programming languages (names → drawer-1
    "exists" facts).
 2. **The intent → target → run → file loop**, with **MicroPython on the Pico as the first
-   language card** (easiest target).
+   language card** (easiest target). [run step DONE] `device-integrator/integrator/micropython.py` runs a
+   snippet on a plugged-in board with mpremote, only after you review the exact command and code (one-time
+   plan token), and labels the result *I ran it*. Tools panel → "Run MicroPython on a board". TODO: the model
+   writing the snippet from your intent; verify live on a Pico.
 3. **A code scorecard:** does the generated program compile/run and do the expected thing.
 
 ### Phase 3 — The Tailscale link

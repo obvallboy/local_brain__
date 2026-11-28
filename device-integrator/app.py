@@ -27,8 +27,10 @@ from integrator import discovery, details
 from integrator.assistant import Assistant, AssistantConfig
 from integrator.notes import NotesStore
 from integrator.serialconsole import SessionManager
+from integrator import micropython
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+MAX_DUMP_UPLOAD = 64 * 1024 * 1024
 DEFAULT_DATA_DIR = os.environ.get(
     "DEVICE_INTEGRATOR_DATA",
     os.path.join(os.path.expanduser("~"), ".device-integrator"),
@@ -48,6 +50,7 @@ def create_app(data_dir: str = DEFAULT_DATA_DIR,
         devices=discovery.snapshot,
         labels=app.config["NOTES"].all,
     )
+    app.config["MP_PLANNER"] = micropython.Planner()
 
     # -- static UI --------------------------------------------------------
     @app.get("/")
@@ -226,6 +229,56 @@ def create_app(data_dir: str = DEFAULT_DATA_DIR,
             return jsonify({"added": app.config["ASSISTANT"].import_(body)})
         except (ValueError, KeyError, TypeError) as exc:
             return jsonify({"error": f"not a File Cabinet export: {exc}"}), 400
+
+    # -- tools: chip-dump check (binwalk) and MicroPython runner (mpremote) --
+    @app.get("/api/tools")
+    def api_tools():
+        import shutil
+        return jsonify({
+            "binwalk": {"installed": bool(shutil.which("binwalk")),
+                        "hint": "sudo pacman -S binwalk (optional: deeper dump scans)"},
+            "mpremote": micropython.status(),
+        })
+
+    @app.post("/api/tools/dump-check")
+    def api_dump_check():
+        """Upload a chip dump; get back what's inside. The file is checked in a temp folder
+        and deleted afterwards. Nothing on the server's disk is read by path."""
+        import tempfile
+        from integrator.dump_check import check
+        if request.content_length and request.content_length > MAX_DUMP_UPLOAD:  # before reading the body
+            return jsonify({"error": "that file is too big for a chip dump (64 MB max)"}), 413
+        up = request.files.get("file")
+        if up is None or not up.filename:
+            return jsonify({"error": "send the dump as a file named 'file'"}), 400
+        with tempfile.TemporaryDirectory(prefix="devy-dump-") as tmp:
+            path = os.path.join(tmp, "dump.bin")
+            up.save(path)
+            report = check(path).to_dict()
+        report["path"] = os.path.basename(up.filename)
+        return jsonify(report)
+
+    @app.get("/api/tools/micropython/boards")
+    def api_mp_boards():
+        return jsonify({"status": micropython.status(), "boards": micropython.list_boards()})
+
+    @app.post("/api/tools/micropython/plan")
+    def api_mp_plan():
+        body = request.get_json(silent=True) or {}
+        try:
+            return jsonify(app.config["MP_PLANNER"].plan(body.get("port") or "", body.get("code") or ""))
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+
+    @app.post("/api/tools/micropython/run")
+    def api_mp_run():
+        """Runs only a plan you reviewed (its one-time token), exactly as shown."""
+        body = request.get_json(silent=True) or {}
+        try:
+            port, code = app.config["MP_PLANNER"].take(body.get("token") or "")
+        except KeyError as exc:
+            return jsonify({"error": str(exc.args[0])}), 409
+        return jsonify(micropython.run(port, code))
 
     # -- export -----------------------------------------------------------
     @app.get("/api/export")

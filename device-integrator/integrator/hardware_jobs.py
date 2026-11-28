@@ -70,9 +70,26 @@ class SimFlashrom:
 
 
 # ---- the Alienware BIOS-dump job ----------------------------------------------
-def bios_dump_job(image: str = "aw15r2.bin", dev: str = "/dev/spidev0.0", spispeed: str = "256"):
+def dump_checker(workdir: str | None = None, expected_size: int | None = None):
+    """A job step helper: look inside a dump file and pass only if it's real data (see dump_check)."""
+    def check_file(image: str):
+        jobs = _jobs()
+        from integrator.dump_check import check
+        rep = check(os.path.join(workdir or os.getcwd(), image), expected_size=expected_size)
+        return jobs.RunResult(0 if rep.ok else 1, rep.say if rep.ok else "", "" if rep.ok else rep.say)
+    return check_file
+
+
+def _dump_looks_real(res):
+    return res.ok, (res.stdout if res.ok else res.stderr) or ("looks real." if res.ok else "not real data.")
+
+
+def bios_dump_job(image: str = "aw15r2.bin", dev: str = "/dev/spidev0.0", spispeed: str = "256",
+                  checker=None):
+    """`checker(image) -> RunResult` inspects the dump; defaults to dump_check on the real file."""
     jobs = _jobs()
     fr = f"sudo flashrom -p linux_spi:dev={dev},spispeed={spispeed}"
+    checker = checker or dump_checker(expected_size=16 * 1024 * 1024)  # W25Q128 = 16 MB
 
     def probe_ok(res):
         found = bool(re.search(r"W25Q128|found .*flash chip", res.stdout, re.I))
@@ -104,6 +121,12 @@ def bios_dump_job(image: str = "aw15r2.bin", dev: str = "/dev/spidev0.0", spispe
                       f"{fr} -r {image}.1 && {fr} -r {image}.2 && cmp {image}.1 {image}.2 && cp {image}.1 {image}",
                       on_fail="The two reads didn't match, so the dump isn't trustworthy yet. Reseat the clip "
                               "(in-circuit reads can be flaky) and I'll read again.",
+                      retryable=True),
+            jobs.Step(jobs.Kind.AUTO, "Checking the dump is real data, not a blank or mirrored read:",
+                      call=lambda: checker(image), name=f"dump check ({image})", check=_dump_looks_real,
+                      retry_back=1,  # a bad dump needs a fresh read, not just a second look
+                      on_fail="Two matching reads can still both be wrong (a clip that isn't touching reads "
+                              "all 0xFF every time). Reseat the clip, check pin 1, and say 'retry': I'll read it again and re-check.",
                       retryable=True),
             jobs.Step(jobs.Kind.AUTO, "Saving an untouched backup and its checksum:",
                       f"cp {image} {image}.ORIGINAL.bin && sha256sum {image}.ORIGINAL.bin",

@@ -7,6 +7,7 @@ Flask>=3.0,<4.0
 pyserial>=3.5     # serial port enumeration + serial console
 psutil>=5.9       # storage + network interface details
 pyusb>=1.2        # USB enumeration where sysfs/lsusb aren't available (needs libusb)
+mpremote>=1.20     # run MicroPython on a plugged-in board (Tools panel)
 
 # Dev/test only:
 pytest>=8.0
