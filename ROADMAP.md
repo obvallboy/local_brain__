@@ -144,6 +144,10 @@ We don't promise these. We build toward them one checked step at a time, and the
 - **Desktop (Windows):** C++ Build Tools + CUDA; a 7-8B model sized for 8 GB VRAM.
 - **Fix the Windows device-discovery gaps** (USB detail is thinner than on Linux; serial works).
 - **Measure real GPU speed and run the scorecard on each machine.**
+  Laptop (GTX 1660 Ti 6 GB, CUDA 13.5, llama-cpp-python 0.3.38 built with `-DGGML_CUDA=on
+  -DCMAKE_CUDA_ARCHITECTURES=75`), 3B q4_k_m, 2026-11-27: model answers **9.0-12.7 s on CPU → 1.8-2.3 s on GPU**
+  (~5×), ~2.3 GB VRAM. Calibration on GPU: cutoff 0.832, kept 24/28 right, blocked every wrong one (CPU: 0.804,
+  same 24/28). The Devy service now runs with `--gpu-layers -1`.
 - *Build now:* the CachyOS/Windows setup checks and scripts. *Run later:* on your machines.
 
 ### Phase 1 — The hardware Brain (core goal; fully testable here with simulated devices)
